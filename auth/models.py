@@ -87,7 +87,7 @@ class Address(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.address}, {self.number} - {self.city}/{self.state}"
+        return f"{self.user.name} - {self.address}, {self.number} - {self.city}/{self.state}"
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -150,7 +150,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['username']
 
     def __str__(self):
-        return f"{self.name or self.username} - {self.email}"
+        return f"{self.name or self.username} - {self.cpf}"
 
     def has_perm(self, perm, obj=None):
         return self.is_superuser
