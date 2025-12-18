@@ -28,12 +28,14 @@ SECRET_KEY = 'django-insecure-k2$_)e47$vp*!=uvlnb_vgpj+eg^*--dx(s*!okn#er57aj*8t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*')
+ALLOWED_HOSTS = ['*']
 
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='*')
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+APPEND_SLASH = True
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -45,6 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'auth.apps.AuthConfig',  # Usando a classe de configuração com label customizado
 ]
 
 MIDDLEWARE = [
@@ -127,13 +130,15 @@ USE_I18N = True
 
 USE_TZ = True
 
-AUTH_USER_MODEL = 'auth.User'
+AUTH_USER_MODEL = 'auth_app.User' 
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

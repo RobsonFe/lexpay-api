@@ -3,7 +3,6 @@
 *.pyc
 __pycache__/
 local_settings.py
-media
 .env
 .venv
 env/
@@ -25,3 +24,19 @@ celerybeat-schedule*
 backup_azure.ps1
 restore_azure.ps1
 *.sqlite3
+
+# Media files - ignorar tudo exceto a imagem padrão
+# Garantir que a estrutura de pastas seja rastreada
+!media/
+!media/avatars/
+# Ignorar todas as imagens de avatar
+media/avatars/*.jpg
+media/avatars/*.jpeg
+media/avatars/*.png
+media/avatars/*.gif
+media/avatars/*.webp
+# EXCEÇÃO: sempre rastrear a imagem padrão
+!media/avatars/default.png
+# Ignorar outros arquivos na pasta media (exceto avatars/default.png)
+media/*
+!media/avatars/
