@@ -72,7 +72,7 @@ class Address(models.Model):
         null=True,
         blank=True
     )
-    zip_code = models.CharField(max_length=8, help_text="CEP do endereço", null=True, blank=True)
+    zip_code = models.CharField(max_length=10, help_text="CEP do endereço", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text="Data de criação")
     updated_at = models.DateTimeField(auto_now=True, help_text="Data de atualização")
 

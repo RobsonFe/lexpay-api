@@ -4,6 +4,21 @@ from django.contrib.auth.password_validation import validate_password
 from auth.models import Address, User
 
 
+class LoginRequestSerializer(serializers.Serializer):
+    """
+    Serializer para requisição de login.
+    """
+    email = serializers.EmailField(required=True, help_text="Email do usuário")
+    password = serializers.CharField(required=True, write_only=True, help_text="Senha do usuário")
+
+
+class LogoutRequestSerializer(serializers.Serializer):
+    """
+    Serializer para requisição de logout.
+    """
+    refresh = serializers.CharField(required=True, help_text="Refresh token para invalidar")
+
+
 class AddressSerializer(serializers.ModelSerializer):
     """
     Serializer para endereços.
