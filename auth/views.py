@@ -25,6 +25,8 @@ from drf_spectacular.types import OpenApiTypes
     description=(
         "Cria um novo usuário no sistema junto com seus endereços em uma única requisição. "
         "A senha deve atender aos critérios de validação do Django e deve ser confirmada no campo password_confirm. "
+        "O campo type_user define o tipo de usuário (Cedente, Broker, Administrador, Advogado). "
+        "Se não informado, o padrão será 'Cedente'. "
         "Os endereços são opcionais e podem ser criados durante o registro ou posteriormente."
     ),
     request=UserCreateSerializer,
@@ -46,6 +48,7 @@ from drf_spectacular.types import OpenApiTypes
                             "cpf": "12345678901",
                             "phone": "11987654321",
                             "avatar": "http://127.0.0.1:8000/media/avatars/default.png",
+                            "type_user": "Cedente",
                             "is_active": True,
                             "is_staff": False,
                             "created_at": "2025-12-18T12:00:00Z",
@@ -103,6 +106,7 @@ from drf_spectacular.types import OpenApiTypes
                 "name": "João Silva",
                 "cpf": "12345678901",
                 "phone": "11987654321",
+                "type_user": "Cedente",
                 "addresses": [
                     {
                         "address": "Rua Exemplo",
@@ -287,6 +291,7 @@ class LogoutView(APIView):
                             "cpf": "12345678901",
                             "phone": "11987654321",
                             "avatar": "http://127.0.0.1:8000/media/avatars/default.png",
+                            "type_user": "Cedente",
                             "is_active": True,
                             "is_staff": False,
                             "created_at": "2025-12-18T12:00:00Z",
@@ -337,7 +342,8 @@ class UserView(APIView):
 		summary="Atualizar dados do usuário",
 		description=(
 			"Atualiza os dados do usuário autenticado e seus endereços. "
-			"Permite atualizar campos do usuário e gerenciar endereços: criar novos, atualizar existentes (enviando o id) ou manter os existentes. "
+			"Permite atualizar campos do usuário (incluindo type_user) e gerenciar endereços: criar novos, atualizar existentes (enviando o id) ou manter os existentes. "
+			"O campo type_user pode ser atualizado para qualquer um dos valores: Cedente, Broker, Administrador, Advogado. "
 			"Requer autenticação via Bearer token no header Authorization."
 		),
 		request=UserUpdateSerializer,
@@ -359,6 +365,7 @@ class UserView(APIView):
 								"cpf": "12345678901",
 								"phone": "11999999999",
 								"avatar": "http://127.0.0.1:8000/media/avatars/default.png",
+								"type_user": "Broker",
 								"is_active": True,
 								"is_staff": False,
 								"created_at": "2025-12-18T12:00:00Z",
@@ -391,6 +398,7 @@ class UserView(APIView):
 				value={
 					"name": "João Silva Santos",
 					"phone": "11999999999",
+					"type_user": "Broker",
 					"addresses": [
 						{
 							"id": "660e8400-e29b-41d4-a716-446655440001",

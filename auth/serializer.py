@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
-from auth.models import Address, User
+from auth.models import Address, User, TypeUserChoices
 
 
 class LoginRequestSerializer(serializers.Serializer):
@@ -43,13 +43,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'username', 'password', 'password_confirm', 
-            'name', 'cpf', 'phone', 'avatar', 'addresses'
+            'name', 'cpf', 'phone', 'avatar', 'type_user', 'addresses'
         )
         read_only_fields = ('id',)
         extra_kwargs = {
             'email': {'required': True},
             'username': {'required': True},
             'password': {'write_only': True},
+            'type_user': {'required': False},
         }
 
     def validate(self, attrs):
@@ -92,7 +93,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'username', 'name', 'cpf', 'phone', 
-            'avatar', 'is_active', 'is_staff', 'created_at', 
+            'avatar', 'type_user', 'is_active', 'is_staff', 'created_at', 
             'updated_at', 'addresses'
         )
         read_only_fields = ('id', 'is_active', 'is_staff', 'created_at', 'updated_at')
@@ -140,7 +141,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'username', 'name', 'cpf', 'phone', 
-            'avatar', 'is_active', 'is_staff', 'created_at', 
+            'avatar', 'type_user', 'is_active', 'is_staff', 'created_at', 
             'updated_at', 'addresses'
         )
         read_only_fields = ('id', 'is_active', 'is_staff', 'created_at', 'updated_at')

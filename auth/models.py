@@ -15,9 +15,11 @@ class UserManager(BaseUserManager):
             raise ValueError('A senha é obrigatória')
 
         email = self.normalize_email(email)
+        extra_fields.setdefault('type_user', TypeUserChoices.CEDENTE)
+        extra_fields.setdefault('is_active', True)
+        
         user = self.model(email=email, username=username, **extra_fields)
         user.set_password(password)
-        user.is_active = extra_fields.get('is_active', True)
         user.save(using=self._db)
         return user
 
@@ -90,6 +92,21 @@ class Address(models.Model):
         return f"{self.user.name} - {self.address}, {self.number} - {self.city}/{self.state}"
 
 
+class TypeUserChoices:
+    CEDENTE = 'Cedente'
+    BROKER = 'Broker'
+    ADMINISTRADOR = 'Administrador'
+    ADVOGADO = 'Advogado'
+    
+    CHOICES = [
+        (CEDENTE, 'Cedente'),
+        (BROKER, 'Broker'),
+        (ADMINISTRADOR, 'Administrador'),
+        (ADVOGADO, 'Advogado'),
+    ]
+
+TYPE_USER_CHOICES = TypeUserChoices.CHOICES
+
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     avatar = models.ImageField(
@@ -133,6 +150,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         blank=True
     )
+    type_user = models.CharField(
+        max_length=20,
+        choices=TYPE_USER_CHOICES,
+        help_text="Tipo de usuário",
+        null=False,
+        blank=False,
+        default=TypeUserChoices.BROKER
+    )
     is_active = models.BooleanField(
         default=True,
         help_text="Designa se este usuário deve ser tratado como ativo."
@@ -167,5 +192,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             models.Index(fields=['username']),
             models.Index(fields=['cpf']),
             models.Index(fields=['phone']),
+            models.Index(fields=['type_user']),
         ]
         ordering = ['-created_at']
