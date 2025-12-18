@@ -4,6 +4,8 @@ def filter_endpoints_by_allowed_tags(result, generator, request, public):
     """
     allowed_tags = {
         'Usuário',
+        'Autenticação',
+        'Endereço',
     }
 
     paths = result['paths']

@@ -140,7 +140,7 @@ class RegisterView(APIView):
 		}, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
-    tags=["Usuário"],
+    tags=["Autenticação"],
     summary="Login de usuário",
     description=(
         "Autentica um usuário no sistema usando email e senha, retornando tokens JWT (access e refresh). "
@@ -212,7 +212,7 @@ class LoginView(APIView):
 
 
 @extend_schema(
-    tags=["Usuário"],
+    tags=["Autenticação"],
     summary="Logout de usuário",
     description=(
         "Realiza logout do usuário autenticado invalidando o refresh token enviado no body da requisição. "
@@ -455,7 +455,7 @@ class UserView(APIView):
 
 
 @extend_schema(
-    tags=["Usuário"],
+    tags=["Endereço"],
     summary="Listar endereços do usuário",
     description=(
         "Retorna todos os endereços cadastrados do usuário autenticado. "
@@ -521,7 +521,7 @@ class AddressView(APIView):
 		}, status=status.HTTP_200_OK)
 	
 	@extend_schema(
-		tags=["Usuário"],
+		tags=["Endereço"],
 		summary="Criar novo endereço",
 		description=(
 			"Cria um novo endereço para o usuário autenticado. "
@@ -622,7 +622,7 @@ class AddressDetailView(APIView):
 			raise NotFound('Endereço não encontrado')
 	
 	@extend_schema(
-		tags=["Usuário"],
+		tags=["Endereço"],
 		summary="Obter endereço específico",
 		description=(
 			"Retorna os dados de um endereço específico do usuário autenticado. "
@@ -687,7 +687,7 @@ class AddressDetailView(APIView):
 		}, status=status.HTTP_200_OK)
 	
 	@extend_schema(
-		tags=["Usuário"],
+		tags=["Endereço"],
 		summary="Atualizar endereço específico",
 		description=(
 			"Atualiza os dados de um endereço específico do usuário autenticado. "
@@ -784,7 +784,7 @@ class AddressDetailView(APIView):
 		}, status=status.HTTP_400_BAD_REQUEST)
 	
 	@extend_schema(
-		tags=["Usuário"],
+		tags=["Endereço"],
 		summary="Deletar endereço específico",
 		description=(
 			"Deleta permanentemente um endereço específico do usuário autenticado. "

@@ -174,7 +174,7 @@ SIMPLE_JWT = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'LexPay',
-    'DESCRIPTION': 'Esta é a documentação da API LexPay, um sistema de gerenciamento de precatórios de documentos.',
+    'DESCRIPTION': 'Esta é a documentação da API LexPay, um sistema de gerenciamento de precatórios e pagamentos inspirados no Celer..',
     'VERSION': '1.0.0',
     'TERMS_OF_SERVICE': 'github.io//RobsonFe',
     'CONTACT': {
@@ -187,7 +187,9 @@ SPECTACULAR_SETTINGS = {
     },
     'SCHEMA_COERCE_PATH_PK_SUFFIX': True,
     'TAGS': [
+        {'name': 'Autenticação', 'description': 'Configurações referentes à autenticação do sistema'},
         {'name': 'Usuário', 'description': 'Configurações referentes aos usuários do sistema'},
+        {'name': 'Endereço', 'description': 'Configurações referentes aos endereços do sistema'},
     ],
     'SORT_OPERATIONS': False,
     'ENUM_NAME_OVERRIDES': {},
