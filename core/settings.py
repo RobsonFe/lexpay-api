@@ -47,10 +47,12 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-    'auth.apps.AuthConfig',  # Usando a classe de configuração com label customizado
+    'auth.apps.AuthConfig', 
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -150,6 +152,13 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DATE_FORMAT': "%d-%m-%Y",
+    'DATETIME_FORMAT': "%d-%m-%Y %H:%M",
+    'DATE_INPUT_FORMATS': ["%d-%m-%Y"],
+    'DATETIME_INPUT_FORMATS': ["%d-%m-%Y %H:%M"],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
 
 SIMPLE_JWT = {
@@ -161,4 +170,34 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'LexPay',
+    'DESCRIPTION': 'Esta é a documentação da API LexPay, um sistema de gerenciamento de precatórios de documentos.',
+    'VERSION': '1.0.0',
+    'TERMS_OF_SERVICE': 'github.io//RobsonFe',
+    'CONTACT': {
+        'name': 'Robson Ferreira',
+        'email': 'robsonfe.dev@gmail.com',
+    },
+    'LICENSE': {
+        'name': 'EULA License',
+        'url': 'https://www.eula.com',
+    },
+    'SCHEMA_COERCE_PATH_PK_SUFFIX': True,
+    'TAGS': [
+        {'name': 'Usuário', 'description': 'Configurações referentes aos usuários do sistema'},
+    ],
+    'SORT_OPERATIONS': False,
+    'ENUM_NAME_OVERRIDES': {},
+    'SCHEMA_PATH_PREFIX': '/api/v1',
+    'ENUM_GENERATE_CHOICE_DESCRIPTION': True,
+    'ENUM_SUFFIX': 'Type',
+    'POSTPROCESSING_HOOKS': [
+        'hook.allowed_tags.filter_endpoints_by_allowed_tags',
+    ],
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    'SERVE_INCLUDE_SCHEMA': True,
+    "COMPONENT_SPLIT_REQUEST": False,
 }
