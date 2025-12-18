@@ -81,11 +81,20 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": config("DB_HOST", default="localhost"),
+        "PORT": config("DB_PORT", default="5433"),
+        "NAME": config("DB_NAME", default="lexpay"),
+        "USER": config("DB_USER", default="lexpay"),
+        "PASSWORD": config("DB_PASSWORD", default="lexpay"),
+        "OPTIONS": {
+            "connect_timeout": 10,
+        },
+        "ATOMIC_REQUESTS": True,
+    },
 }
+
 
 
 # Password validation
