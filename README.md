@@ -19,13 +19,15 @@ API de gerenciamento de precatórios construída com Django Rest Framework.
 - Python 3.12
 - Django 6.0
 - Django Rest Framework 3.16.1
-- PostgreSQL/ psycopg2 2.9.10
 - Django Cors Headers 4.9.0
 - Django Filter 25.2
 - Django Rest Framework Simple JWT 5.5.1
 - Python Decouple 3.8
-- SQLParse 0.5.4
-- TZData 2025.3
+- Postgres 17
+- drf spectacular 0.29.0
+- django filter 25.2
+- python decouple 3.8
+
 
 ## Como Instalar as dependencias do Projeto
 
@@ -213,3 +215,32 @@ python manage.py migrate
 **Problema**: Dados foram perdidos
 - Os dados são persistidos em volumes Docker. Use `docker-compose down` (sem `-v`) para preservar os dados
 - Os volumes são: `postgres_data` e `pgadmin_data`
+
+## Documentação da API
+
+A documentação da API está disponível em: `http://localhost:8000/api/docs/`
+
+A documentação da API está disponível em: `http://localhost:8000/api/schema/redoc/`
+
+### Como configurar os Endpoints na Documentação
+- No arquivo `core/settings.py` na variável `SPECTACULAR_SETTINGS`
+- Adicione a tag do endpoint no campo `tags`
+- Adicione a descrição do endpoint no campo `description`
+- Adicione a requisição do endpoint no campo `request`
+- Adicione a resposta do endpoint no campo `responses`
+- Adicione o exemplo de requisição no campo `examples`
+- Adicione o exemplo de resposta no campo `examples`
+- Adicione o exemplo de resposta no campo `examples`
+
+- Use o `Hook` para filtrar os endpoints que possuem uma das tags permitidas.
+
+**Exemplo:**
+```python
+'TAGS': [
+    {'name': 'Autenticação', 'description': 'Configurações referentes à autenticação do sistema'},
+    {'name': 'Usuário', 'description': 'Configurações referentes aos usuários do sistema'},
+    {'name': 'Endereço', 'description': 'Configurações referentes aos endereços do sistema'},
+],
+```
+
+Após isso, no `settings.py` adicione a tag no campo `TAGS` da configuração do `SPECTACULAR_SETTINGS`.
