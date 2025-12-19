@@ -6,6 +6,7 @@ def filter_endpoints_by_allowed_tags(result, generator, request, public):
         'Usuário',
         'Autenticação',
         'Endereço',
+        'Precatórios',
     }
 
     paths = result['paths']

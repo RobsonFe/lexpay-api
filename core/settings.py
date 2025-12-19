@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'auth.apps.AuthConfig', 
     'drf_spectacular',
+    'oficio.apps.OficioConfig',
 ]
 
 MIDDLEWARE = [
@@ -190,6 +191,7 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Autenticação', 'description': 'Configurações referentes à autenticação do sistema'},
         {'name': 'Usuário', 'description': 'Configurações referentes aos usuários do sistema'},
         {'name': 'Endereço', 'description': 'Configurações referentes aos endereços do sistema'},
+        {'name': 'Precatórios', 'description': 'Configurações referentes aos precatórios do sistema'},
     ],
     'SORT_OPERATIONS': False,
     'ENUM_NAME_OVERRIDES': {},
