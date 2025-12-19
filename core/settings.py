@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'auth.apps.AuthConfig', 
     'drf_spectacular',
     'oficio.apps.OficioConfig',
+    'due',
+    
 ]
 
 MIDDLEWARE = [
