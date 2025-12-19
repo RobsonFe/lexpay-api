@@ -137,14 +137,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=False
     )
     cpf = models.CharField(
-        max_length=11,
+        max_length=20,
         unique=True,
         help_text="CPF do usuário",
         null=True,
         blank=True
     )
     phone = models.CharField(
-        max_length=11,
+        max_length=20,
         unique=True,
         help_text="Telefone do usuário",
         null=True,
