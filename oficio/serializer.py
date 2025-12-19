@@ -116,11 +116,30 @@ class PrecatorioSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class PrecatorioUpdateSerializer(serializers.ModelSerializer):
-    """
-    Serializer específico para atualizações (PATCH/PUT), 
-    caso queira restringir campos que não podem ser mudados após criação
-    (ex: não mudar o tribunal ou número do processo).
-    """
-    class Meta:
-        model = Precatorio
-        fields = ['valor_venda', 'status', 'descricao', 'percentual_honorarios']
+	"""
+	Serializer específico para atualizações (PATCH/PUT), 
+	caso queira restringir campos que não podem ser mudados após criação
+	(ex: não mudar o tribunal ou número do processo).
+	"""
+	class Meta:
+		model = Precatorio
+		fields = ['valor_venda', 'status', 'descricao', 'percentual_honorarios']
+
+	def validate(self, data):
+		"""
+		Reaplica a regra de negócio na atualização.
+		Verifica se o valor de venda não excede o valor principal.
+		"""
+		valor_venda = data.get('valor_venda')
+		
+		if valor_venda is None:
+			return data
+
+		valor_principal = self.instance.valor_principal
+		
+		if valor_venda > valor_principal:
+			raise serializers.ValidationError({
+				'valor_venda': 'O valor de venda não pode ser maior que o valor principal.'
+			})
+			
+		return data

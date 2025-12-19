@@ -176,24 +176,6 @@ class PrecatorioListView(BasePrecatorioView, generics.ListAPIView):
 				},
 				status=status.HTTP_500_INTERNAL_SERVER_ERROR
 			)
-	
-	def get_queryset(self):
-		"""
-		Retorna queryset otimizado com select_related e prefetch_related.
-		O filtro baseado no tipo de usuário é feito pela permissão MarketplaceViewPermission.
-		"""
-		queryset = Precatorio.objects.all().select_related(
-			'tribunal',
-			'ente_devedor',
-			'cedente',
-			'advogado'
-		).prefetch_related('documentos')
-		
-		for permission in self.get_permissions():
-			if hasattr(permission, 'filter_queryset'):
-				queryset = permission.filter_queryset(self.request, queryset, self)
-		
-		return queryset
 
 
 class PrecatorioCreateView(BasePrecatorioView, generics.CreateAPIView):
@@ -505,24 +487,6 @@ class PrecatorioRetrieveView(BasePrecatorioView, generics.RetrieveAPIView):
 				},
 				status=status.HTTP_500_INTERNAL_SERVER_ERROR
 			)
-	
-	def get_queryset(self):
-		"""
-		Retorna queryset otimizado com select_related e prefetch_related.
-		O filtro baseado no tipo de usuário é feito pela permissão MarketplaceViewPermission.
-		"""
-		queryset = Precatorio.objects.all().select_related(
-			'tribunal',
-			'ente_devedor',
-			'cedente',
-			'advogado'
-		).prefetch_related('documentos')
-		
-		for permission in self.get_permissions():
-			if hasattr(permission, 'filter_queryset'):
-				queryset = permission.filter_queryset(self.request, queryset, self)
-		
-		return queryset
 
 
 class PrecatorioUpdateView(BasePrecatorioView, generics.UpdateAPIView):
@@ -720,24 +684,6 @@ class PrecatorioUpdateView(BasePrecatorioView, generics.UpdateAPIView):
 				},
 				status=status.HTTP_500_INTERNAL_SERVER_ERROR
 			)
-	
-	def get_queryset(self):
-		"""
-		Retorna queryset otimizado com select_related e prefetch_related.
-		O filtro baseado no tipo de usuário é feito pela permissão MarketplaceViewPermission.
-		"""
-		queryset = Precatorio.objects.all().select_related(
-			'tribunal',
-			'ente_devedor',
-			'cedente',
-			'advogado'
-		).prefetch_related('documentos')
-		
-		for permission in self.get_permissions():
-			if hasattr(permission, 'filter_queryset'):
-				queryset = permission.filter_queryset(self.request, queryset, self)
-		
-		return queryset
 
 
 class PrecatorioDeleteView(BasePrecatorioView, generics.DestroyAPIView):
