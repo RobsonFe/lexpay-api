@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.db import models
 from django.conf import settings
 from django.db.models import Q 
@@ -18,15 +19,13 @@ class DueDiligence(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     
     precatorio = models.ForeignKey(
-        Precatorio, 
-        on_delete=models.PROTECT, 
+        Precatorio, on_delete=models.PROTECT, 
         related_name="diligencias",
         help_text="Precatório que está sendo analisado"
     )
     
     analista = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.PROTECT, 
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, 
         limit_choices_to={
             'type_user__in': [
                 TypeUserChoices.BROKER,
@@ -38,10 +37,8 @@ class DueDiligence(models.Model):
     )
 
     status_analise = models.CharField(
-        max_length=20, 
-        choices=StatusAnalise.choices, 
-        default=StatusAnalise.PENDENTE, 
-        db_index=True
+        max_length=20, choices=StatusAnalise.choices, 
+        default=StatusAnalise.PENDENTE,db_index=True
     )
     
     data_inicio_analise = models.DateTimeField(null=True, blank=True)
@@ -70,3 +67,18 @@ class DueDiligence(models.Model):
 
     def __str__(self):
         return f"Análise {self.precatorio.numero_processo} - {self.get_status_analise_display()}"
+    
+    def save(self,*args, **kwargs):
+        
+        if self.pk:
+            obj = DueDiligence.objects.get(pk=self.pk)
+            if obj.status_analise != self.status_analise:
+                if self.status_analise == self.StatusAnalise.EM_ANALISE:
+                    self.data_inicio_analise = timezone.now()
+
+                elif self.status_analise in [
+                    self.StatusAnalise.APROVADO, 
+                    self.StatusAnalise.REJEITADO
+                ]: self.data_conclusao_analise = timezone.now()
+        return super().save(*args, **kwargs)
+                
