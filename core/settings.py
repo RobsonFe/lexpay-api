@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'oficio.apps.OficioConfig',
     'proposal',
+    'due'
 ]
 
 MIDDLEWARE = [
