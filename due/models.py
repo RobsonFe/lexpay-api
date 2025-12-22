@@ -1,4 +1,4 @@
-from datetime import timezone
+from django.utils import timezone
 from django.db import models
 from django.conf import settings
 from django.db.models import Q 
@@ -70,7 +70,7 @@ class DueDiligence(models.Model):
     
     def save(self,*args, **kwargs):
         
-        if self.pk:
+        try:
             obj = DueDiligence.objects.get(pk=self.pk)
             if obj.status_analise != self.status_analise:
                 if self.status_analise == self.StatusAnalise.EM_ANALISE:
@@ -80,5 +80,7 @@ class DueDiligence(models.Model):
                     self.StatusAnalise.APROVADO, 
                     self.StatusAnalise.REJEITADO
                 ]: self.data_conclusao_analise = timezone.now()
+        except DueDiligence.DoesNotExist:
+            ...
         return super().save(*args, **kwargs)
                 
