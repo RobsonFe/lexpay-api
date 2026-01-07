@@ -37,6 +37,7 @@ class Proposal(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
     
+    _current_user = None
     
     
     def __str__(self):
@@ -61,27 +62,31 @@ class Proposal(models.Model):
             raise ValueError("A taxa de juros anual deve estar entre 0 e 100.")
         if self.prazo_pagamento_meses <= 0:
             raise ValueError("O prazo de pagamento em meses deve ser maior que zero.")
-        if self.status != 'RASCUNHO':
-            raise ValueError("Apenas propostas em RASCUNHO podem ser salvas.")
         if self.taxa_desconto + self.taxa_juros_anual > 100:
             raise ValueError("A soma das taxas de desconto e juros anual deve ser menor ou igual a 100.")
 
     def save(self, *args, **kwargs):
+        # 1. Buscando dados do relacionamento (Precatorio)
         
         valor_face_precatorio = self.precatorio.valor_principal
         percentual_honorarios_precatorio = self.precatorio.percentual_honorarios
         
         self.validate()
         
-        
+        # CÁLCULO CEDENTE
+
         honorarios = self.valor_proposto * (percentual_honorarios_precatorio / 100)
-            
+        
+        # O resultado final salvo no campo do model   
         self.valor_liquido_cedente = self.valor_proposto - honorarios
        
         
-        custo_juros = Decimal('0')
         
+         # CÁLCULO PROPONENTE
         if self.prazo_pagamento_meses > 0:
+            
+        # Fórmula: M = C * (1 + i)^t
+
             base_juros = Decimal('1') + (self.taxa_juros_anual / Decimal('100'))
             fator_tempo = base_juros ** (self.prazo_pagamento_meses / Decimal('12'))
             valor_final = self.valor_proposto * (base_juros ** fator_tempo)
@@ -89,7 +94,9 @@ class Proposal(models.Model):
             self.valor_liquido_proponente = valor_face_precatorio - self.valor_proposto - custo_juros
         else:
             self.valor_liquido_proponente = valor_face_precatorio - self.valor_proposto
-     
+             
+        # MARGEM DE LUCRO
+
         if self.valor_proposto > 0:
             self.margem_lucro_percentual = ((valor_face_precatorio - self.valor_proposto) / self.valor_proposto) * Decimal('100')
             
@@ -101,12 +108,12 @@ class Proposal(models.Model):
 
 class ProposalHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, max_length=255)
+    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     status_anterior = models.CharField(max_length=20, choices=STATUS, default='RASCUNHO')
     status_novo = models.CharField(max_length=20, choices=STATUS, default='ENVIADA')
     valor_anterior = models.DecimalField(max_digits=18, decimal_places=2, null=False, blank=False)
     valor_novo = models.DecimalField(max_digits=18, decimal_places=2, null=False, blank=False)
-    alterado_por = models.ForeignKey(User, on_delete=models.PROTECT, max_length=255)
+    alterado_por = models.ForeignKey(User, on_delete=models.PROTECT)
     motivo_alteracao = models.TextField(blank=False, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

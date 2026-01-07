@@ -1,4 +1,5 @@
-from rest_framework import serializers
+
+'''from rest_framework import serializers
 from proposal.models import Proposal, ProposalHistory
 
 
@@ -13,3 +14,4 @@ class ProposalHistorySerializer(serializers.ModelSerializer):
         model = ProposalHistory
         fields = '__all__'
         read_only_fields = ('id', 'created_at')
+        '''

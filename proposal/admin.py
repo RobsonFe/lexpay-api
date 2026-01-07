@@ -10,7 +10,7 @@ class ProposalAdmin(admin.ModelAdmin):
 
 
 
-admin.site.register(Proposal)
+admin.site.register(Proposal, ProposalAdmin)
 
 
 
@@ -19,4 +19,4 @@ class ProposalHistoryAdmin(admin.ModelAdmin):
     list_filter = ('proposal', 'status_anterior', 'status_novo')
     search_fields = ('proposal__id', 'alterado_por__username')
 
-admin.site.register(ProposalHistory)
+admin.site.register(ProposalHistory, ProposalHistoryAdmin)
