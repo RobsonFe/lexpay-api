@@ -17,13 +17,11 @@ class DueDiligence(models.Model):
         REJEITADO = "REJEITADO", "Rejeitado"
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    
     precatorio = models.ForeignKey(
         Precatorio, on_delete=models.PROTECT, 
         related_name="diligencias",
         help_text="Precatório que está sendo analisado"
     )
-    
     analista = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, 
         limit_choices_to={
@@ -35,19 +33,15 @@ class DueDiligence(models.Model):
         related_name="analises_realizadas",
         help_text="Responsável pela análise (Apenas Admin ou Broker)"
     )
-
     status_analise = models.CharField(
         max_length=20, choices=StatusAnalise.choices, 
         default=StatusAnalise.PENDENTE,db_index=True
-    )
-    
+    )  
     data_inicio_analise = models.DateTimeField(null=True, blank=True)
-    data_conclusao_analise = models.DateTimeField(null=True, blank=True)
-    
+    data_conclusao_analise = models.DateTimeField(null=True, blank=True)  
     observacoes = models.TextField(null=True, blank=True)
     documento_aprovado = models.BooleanField(default=False)
-    motivo_repactuacao = models.TextField(null=True, blank=True)
-    
+    motivo_repactuacao = models.TextField(null=True, blank=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -68,8 +62,7 @@ class DueDiligence(models.Model):
     def __str__(self):
         return f"Análise {self.precatorio.numero_processo} - {self.get_status_analise_display()}"
     
-    def save(self,*args, **kwargs):
-        
+    def save(self,*args, **kwargs): 
         try:
             obj = DueDiligence.objects.get(pk=self.pk)
             if obj.status_analise != self.status_analise:
@@ -84,3 +77,21 @@ class DueDiligence(models.Model):
             ...
         return super().save(*args, **kwargs)
                 
+class AnaliseDocumento(models.Model):
+    class StatusDocumento(models.TextChoices):
+        PENDENTE = "PENDENTE", "Pendente"
+        APROVADO = "APROVADO", "Aprovado"
+        REPACTUADO = "REPACTUADO", "Repactuado"
+        REJEITADO = "REJEITADO", "Rejeitado"
+    
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    due_diligence = models.ForeignKey(DueDiligence, on_delete=models.CASCADE, related_name="analise_documentos")
+    documento = models.ForeignKey('oficio.Documento', on_delete=models.PROTECT, related_name="analises_feitas")
+    status = models.CharField(max_length=20, choices=StatusDocumento.choices, default=StatusDocumento.PENDENTE)
+    observacoes_analise = models.TextField(null=True, blank=True)
+    data_analise = models.DateTimeField(null=True, blank=True)
+    analisado_por = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.PROTECT, related_name="analisado_por")
+
+    def __str__(self):
+        return f"Analise de '{self.documento.titulo}'"
+
