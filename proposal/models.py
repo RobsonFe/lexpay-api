@@ -35,7 +35,7 @@ class Proposal(models.Model):
     data_vencimento = models.DateField()
     observacoes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     _current_user = None
     
@@ -89,7 +89,7 @@ class Proposal(models.Model):
 
             base_juros = Decimal('1') + (self.taxa_juros_anual / Decimal('100'))
             fator_tempo = base_juros ** (self.prazo_pagamento_meses / Decimal('12'))
-            valor_final = self.valor_proposto * (base_juros ** fator_tempo)
+            valor_final = self.valor_proposto * fator_tempo
             custo_juros = valor_final - self.valor_proposto
             self.valor_liquido_proponente = valor_face_precatorio - self.valor_proposto - custo_juros
         else:
