@@ -1,9 +1,14 @@
 from django.contrib import admin
-from due.models import DueDiligence
+from .models import DueDiligence, AnaliseDocumento
+
+class AnaliseDocumentoInline(admin.TabularInline):
+    model = AnaliseDocumento
+    extra = 0
+    can_delete = False
+    readonly_fields = ('documento',)
 
 @admin.register(DueDiligence)
 class DueDiligenceAdmin(admin.ModelAdmin):
-    list_display = ('analista', 'status_analise', 'data_inicio_analise', 'data_conclusao_analise')
-    list_filter = ['status_analise']
-    readonly_fields = ('data_inicio_analise', 'data_conclusao_analise', 'created_at', 'updated_at')
-    autocomplete_fields = ['precatorio', 'analista']
+    list_display = ('id', 'precatorio', 'analista', 'status_analise', 'created_at')
+    list_filter = ('status_analise',)
+    inlines = [AnaliseDocumentoInline]
