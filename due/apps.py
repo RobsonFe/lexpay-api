@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class DueConfig(AppConfig):
-    defaul_auto_field = 'django.db.models.BigAuth_field'
+    defaulf_auto_field = 'django.db.models.BigAutoField'
     name = 'due'
 
     def ready(self):

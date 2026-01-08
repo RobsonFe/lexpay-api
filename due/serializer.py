@@ -62,18 +62,20 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'observacoes': 'Preencher o campo de observações.'})
             
         if status_analise == DueDiligence.StatusAnalise.APROVADO:
+
+            if not self.instance:
+                raise serializers.ValidationError('Não é possível criar uma Due Diligence já aprovada.')
             
             if not documento_aprovado:
                 raise serializers.ValidationError({'documento_aprovado': 'Verifique a aprovação do documento.'})
+            
+            pendencias = self.instance.analise_documentos.exclude(
+                status=AnaliseDocumento.StatusDocumento.APROVADO
+            ).exists()
 
-            if self.instance:
-                pendencias = self.instance.analise_documentos.exclude(
-                    status=AnaliseDocumento.StatusDocumento.APROVADO
-                ).exists()
-
-                if pendencias:
-                    raise serializers.ValidationError(
-                        'Não é possível aprovar pois existem itens pendentes ou rejeitados.'
-                    )
+            if pendencias:
+                raise serializers.ValidationError(
+                    'Não é possível aprovar pois existem itens pendentes ou rejeitados.'
+                )
         
         return data

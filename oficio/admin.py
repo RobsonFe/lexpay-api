@@ -82,7 +82,6 @@ class DocumentoInline(admin.TabularInline):
         if obj.pk and obj.arquivo:
             extension = obj.get_file_extension()
             size_mb = obj.get_file_size_mb()
-            # CORREÇÃO: Formatar float fora do format_html
             size_str = f"{size_mb:.2f}" if size_mb else "0"
             
             return format_html(
@@ -174,8 +173,7 @@ class PrecatorioAdmin(admin.ModelAdmin):
     
     inlines = [DocumentoInline]
     
-    # Se precisar de select2 ou autocomplete, descomente abaixo
-    # autocomplete_fields = ['cedente', 'advogado', 'tribunal', 'ente_devedor']
+    autocomplete_fields = ['cedente', 'advogado', 'tribunal', 'ente_devedor']
     
     def get_cedente_name(self, obj):
         if obj.cedente:
@@ -211,8 +209,6 @@ class PrecatorioAdmin(admin.ModelAdmin):
                     url = reverse('admin:oficio_documento_change', args=[doc.pk])
                     extension = doc.get_file_extension() or 'N/A'
                     size_mb = doc.get_file_size_mb() or 0
-                    
-                    # CORREÇÃO: Formatar float fora do format_html
                     size_str = f"{size_mb:.2f}"
                     
                     html += format_html(
@@ -223,7 +219,6 @@ class PrecatorioAdmin(admin.ModelAdmin):
                         size_str
                     )
                 html += '</ul>'
-                # CORREÇÃO: Usar mark_safe para HTML montado manualmente
                 return mark_safe(html)
         return 'Nenhum documento cadastrado'
     
@@ -305,13 +300,11 @@ class DocumentoAdmin(admin.ModelAdmin):
             extension = obj.get_file_extension()
             if extension:
                 if obj.is_pdf():
-                    # CORREÇÃO: Passar 'PDF' como argumento
                     return format_html(
                         '<span style="color: #d32f2f; font-weight: bold;">{}</span>',
                         'PDF'
                     )
                 elif obj.is_word():
-                    # CORREÇÃO: Passar 'WORD' como argumento
                     return format_html(
                         '<span style="color: #1976d2; font-weight: bold;">{}</span>',
                         'WORD'
@@ -325,7 +318,6 @@ class DocumentoAdmin(admin.ModelAdmin):
         if obj.arquivo:
             size_mb = obj.get_file_size_mb()
             if size_mb:
-                # CORREÇÃO: Formatar float fora do format_html
                 return format_html('{} MB', f"{size_mb:.2f}")
         return '-'
     

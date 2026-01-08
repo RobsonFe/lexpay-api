@@ -62,7 +62,7 @@ class DueDiligence(models.Model):
     def __str__(self):
         return f"Análise {self.precatorio.numero_processo} - {self.get_status_analise_display()}"
     
-    def save(self,*args, **kwargs): 
+    def save(self, *args, **kwargs): 
         try:
             obj = DueDiligence.objects.get(pk=self.pk)
             if obj.status_analise != self.status_analise:
@@ -74,7 +74,7 @@ class DueDiligence(models.Model):
                     self.StatusAnalise.REJEITADO
                 ]: self.data_conclusao_analise = timezone.now()
         except DueDiligence.DoesNotExist:
-            ...
+            pass
         return super().save(*args, **kwargs)
                 
 class AnaliseDocumento(models.Model):
