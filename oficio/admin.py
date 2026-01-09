@@ -100,6 +100,7 @@ class PrecatorioAdmin(admin.ModelAdmin):
     Configuração do admin para o modelo Precatorio.
     """
     list_display = (
+        'id',
         'numero_processo',
         'get_cedente_name',
         'tribunal',

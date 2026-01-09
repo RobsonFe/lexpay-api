@@ -12,27 +12,36 @@ from rest_framework.exceptions import ValidationError
 
 
 
+from django.db import transaction
+
 class CreateProposalView(APIView):
     permission_classes = [IsAuthenticated]
-    @extend_schema(
-        tags = ["Propostas"],
-        request=ProposalSerializer, 
-        responses={
-            201: ProposalSerializer,
-            400: "Bad Request"
-        }, 
-       description = 'Rota para criação de uma proposta de Antecipação de um precatório'
-    )
+
     def post(self, request):
+        # 1. Instanciamos o serializer PRIMEIRO para garantir que ele exista no 'except'
+        serializer = ProposalSerializer(data=request.data)
+        
         try:
-            serializer = ProposalSerializer(data=request.data)
+            # 2. Validação explícita
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({'message': 'Proposal created successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
             
+            # 3. Transação Atômica (Requisito 1 da Task #11)
+            with transaction.atomic():
+                # O .save() chama o seu método save() do model
+                proposal = serializer.save()
+                
+                # Resposta de sucesso
+                return Response(
+                    {'message': 'Proposal created successfully', 'data': serializer.data}, 
+                    status=status.HTTP_201_CREATED
+                )
         
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            # Captura o erro "Proposal has no precatorio" ou erros de validação
+            return Response(
+                {"error": str(e), "details": serializer.errors}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         
 class ProposalListView(APIView):
@@ -44,18 +53,16 @@ class ProposalListView(APIView):
             200: 'List Of Proposals',
             400: "Bad Request"
         },
-        tags=["Propostasl"],
+        tags=["Propostas"],
         description="Rota para listagem de propostas de Antecipação de precatórios"
         
     )
     def get(self, request):
-        try:
-            propopsals = Proposal.objects.all()
-            serializer = ProposalSerializer(propopsals, many=True)
-            return Response({'message': 'proposals', 'data': serializer.data }, status=status.HTTP_200_OK)
-        
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        propopsals = Proposal.objects.all()
+        serializer = ProposalSerializer(propopsals, many=True)
+        return Response({'message': 'Proposals', 'Results': serializer.data }, status=status.HTTP_200_OK)
+    
+  
         
         
         
@@ -73,7 +80,7 @@ class ProposalUpdateView(APIView):
         description="Rota para atualização de uma proposta de Antecipação de um precatório"
     )
     
-    def put(self, request, pk, *args, **kwargs):
+    def patch(self, request, pk, *args, **kwargs):
         try:
             proposal = get_object_or_404(Proposal, pk=pk)
             serializer = ProposalSerializer(proposal, data=request.data)
@@ -120,7 +127,8 @@ class ProposalAcceptView(APIView):
 
         try:
             with transaction.atomic():
-               
+                precatorio = proposal.precatorio
+                
                 if proposal.data_vencimento < timezone.now().date():
                     proposal.status = 'EXPIRADA'
                     proposal.save()

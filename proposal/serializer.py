@@ -6,8 +6,8 @@ from proposal.models import Proposal, ProposalHistory
 class ProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proposal
-        fields = 'id', 'status', 'valor_proposto', 'taxa_desconto', 'taxa_juros_anual', 'prazo_pagamento_meses', 'valor_liquido_cedente', 'valor_liquido_proponente', 'data_vencimento', 'margem_lucro_percentual'
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        fields = 'id', 'status', 'valor_proposto', 'taxa_desconto', 'taxa_juros_anual', 'prazo_pagamento_meses', 'valor_liquido_cedente', 'valor_liquido_proponente', 'data_vencimento', 'margem_lucro_percentual', 'precatorio', 'proponente'
+        read_only_fields = ('id', 'created_at', 'updated_at','valor_liquido_cedente', 'valor_liquido_proponente', 'margem_lucro_percentual')
 
 class ProposalHistorySerializer(serializers.ModelSerializer):
     class Meta:

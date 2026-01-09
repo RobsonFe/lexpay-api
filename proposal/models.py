@@ -30,14 +30,14 @@ class StausChoices:
 
 class Proposal(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    precatorio = models.ForeignKey(Precatorio, on_delete=models.PROTECT)
+    precatorio = models.ForeignKey(Precatorio, on_delete=models.PROTECT, blank=False, null=False)
     proponente = models.ForeignKey(User, on_delete=models.PROTECT, limit_choices_to={'type_user': 'Broker'})
     valor_proposto = models.DecimalField(max_digits=18, decimal_places=2)
     taxa_desconto = models.DecimalField(max_digits=5, decimal_places=2)
     taxa_juros_anual = models.DecimalField(max_digits=5, decimal_places=2)
     prazo_pagamento_meses = models.IntegerField()
-    valor_liquido_cedente = models.DecimalField(max_digits=18, decimal_places=2)
-    valor_liquido_proponente = models.DecimalField(max_digits=18, decimal_places=2)
+    valor_liquido_cedente = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    valor_liquido_proponente = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=20, choices=StausChoices.STATUS, default='RASCUNHO')
     data_vencimento = models.DateField()
     observacoes = models.TextField(blank=True, null=True)
@@ -113,8 +113,7 @@ class Proposal(models.Model):
              
         # MARGEM DE LUCRO
 
-        if self.valor_proposto > 0:
-            self.margem_lucro_percentual = ((valor_face_precatorio - self.valor_proposto) / self.valor_proposto) * Decimal('100')
+       
             
         super().save(*args, **kwargs)
         
@@ -129,7 +128,7 @@ class ProposalHistory(models.Model):
     status_novo = models.CharField(max_length=20, choices=StausChoices.STATUS, default='ENVIADA')
     valor_anterior = models.DecimalField(max_digits=18, decimal_places=2, null=False, blank=False)
     valor_novo = models.DecimalField(max_digits=18, decimal_places=2, null=False, blank=False)
-    alterado_por = models.ForeignKey(User, on_delete=models.PROTECT)
+    alterado_por = models.ForeignKey(User, on_delete=models.PROTECT, null=True)
     motivo_alteracao = models.TextField(blank=False, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
