@@ -48,7 +48,6 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
         dados = {**dados_instance, **data}
 
         status_analise = dados.get('status_analise')
-        documento_aprovado = dados.get('documento_aprovado')
         observacoes = dados.get('observacoes')
         motivo_repactuacao = dados.get('motivo_repactuacao')
 
@@ -66,9 +65,6 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
             if not self.instance:
                 raise serializers.ValidationError('Não é possível criar uma Due Diligence já aprovada.')
             
-            if not documento_aprovado:
-                raise serializers.ValidationError({'documento_aprovado': 'Verifique a aprovação do documento.'})
-            
             pendencias = self.instance.analise_documentos.exclude(
                 status=AnaliseDocumento.StatusDocumento.APROVADO
             ).exists()
@@ -77,5 +73,6 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Não é possível aprovar pois existem itens pendentes ou rejeitados.'
                 )
+            data['documento_aprovado'] = True
         
         return data
