@@ -4,9 +4,27 @@ from oficio.models import Precatorio
 from auth.models import User
 from decimal import Decimal
 from due.models import DueDiligence
-# Create your models here.
+from django.db.models import F, ExpressionWrapper, DecimalField, Case, When, Value
 
-
+class ProposalQuerySet(models.QuerySet):
+    def com_score_atratividade(self):
+        return self.filter(
+            precatorio__status='Disponível' 
+        ).annotate(
+            margem_db=ExpressionWrapper(
+                (F('precatorio__valor_principal') - F('valor_proposto')) / F('valor_proposto') * Value(100),
+                output_field=DecimalField()
+            )
+        ).annotate(
+            
+            score=ExpressionWrapper(
+                (F('margem_db') * Value(0.4)) + 
+                ((Value(100) - F('taxa_desconto')) * Value(0.3)) + 
+                ((Value(120) - F('prazo_pagamento_meses')) * Value(0.2)),
+                output_field=DecimalField()
+            )
+        ).order_by('-score')
+        
 class StausChoices:
     
     RASCUNHO = 'Rascunho'
@@ -61,24 +79,16 @@ class Proposal(models.Model):
     
 
     def save(self, *args, **kwargs):
-        # 1. Buscando dados do relacionamento (Precatorio)
         
         valor_face_precatorio = self.precatorio.valor_principal
         percentual_honorarios_precatorio = self.precatorio.percentual_honorarios
         
-        # CÁLCULO CEDENTE
 
         honorarios = self.valor_proposto * (percentual_honorarios_precatorio / 100)
         
-        # O resultado final salvo no campo do model   
-        self.valor_liquido_cedente = self.valor_proposto - honorarios
+        self.valor_liquido_cedente = self.valor_proposto - honorarios   
        
-        
-        
-         # CÁLCULO PROPONENTE
         if self.prazo_pagamento_meses > 0:
-            
-        # Fórmula: M = C * (1 + i)^t
 
             base_juros = Decimal('1') + (self.taxa_juros_anual / Decimal('100'))
             fator_tempo = base_juros ** (self.prazo_pagamento_meses / Decimal('12'))
@@ -88,13 +98,11 @@ class Proposal(models.Model):
         else:
             self.valor_liquido_proponente = valor_face_precatorio - self.valor_proposto
              
-        # MARGEM DE LUCRO
 
-       
             
         super().save(*args, **kwargs)
         
-        
+    objects = ProposalQuerySet.as_manager()
         
         
 
@@ -112,3 +120,6 @@ class ProposalHistory(models.Model):
 
     def __str__(self):
         return f"ProposalHistory: {self.proposal.id} - {self.status_anterior} -> {self.status_novo} alterado por {self.alterado_por} Pelo motivo: {self.motivo_alteracao}"
+    
+    
+    
