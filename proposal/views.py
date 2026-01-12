@@ -161,3 +161,23 @@ class ProposalAcceptView(APIView):
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": f"Erro interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+        
+class InvestorOpportunitiesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Propostas"],
+        description="Lista oportunidades de investimento ordenadas por inteligência de rentabilidade (Score)."
+    )
+    def get(self, request):
+      
+        proposals = Proposal.objects.filter(status='ENVIADA').com_score_atratividade()
+        
+        serializer = ProposalSerializer(proposals, many=True)
+        return Response({
+            "count": proposals.count(),
+            "results": serializer.data
+        }, status=status.HTTP_200_OK)
