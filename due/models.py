@@ -16,12 +16,21 @@ class DueDiligence(models.Model):
         REPACTUADO = "REPACTUADO", "Repactuado"
         REJEITADO = "REJEITADO", "Rejeitado"
 
+    class PrioridadeType(models.TextChoices):
+        BAIXA = "BAIXA", "Baixa"
+        MEDIA = "MEDIA", "Média"
+        ALTA = "ALTA", "Alta"
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     precatorio = models.ForeignKey(
         Precatorio, on_delete=models.PROTECT, 
         related_name="diligencias",
         help_text="Precatório que está sendo analisado"
     )
+    prioridade = models.CharField(
+            max_length=10, choices=PrioridadeType.choices, 
+            default=PrioridadeType.MEDIA,db_index=True
+        )  
     analista = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, 
         limit_choices_to={
