@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'auth.apps.AuthConfig', 
     'drf_spectacular',
     'oficio.apps.OficioConfig',
+    'proposal',
+    'due'
 ]
 
 MIDDLEWARE = [
@@ -192,6 +194,7 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Usuário', 'description': 'Configurações referentes aos usuários do sistema'},
         {'name': 'Endereço', 'description': 'Configurações referentes aos endereços do sistema'},
         {'name': 'Precatórios', 'description': 'Configurações referentes aos precatórios do sistema'},
+        {'name': 'Propostas', 'description': 'Configurações referentes às propostas de Antecipação de precatórios'},
     ],
     'SORT_OPERATIONS': False,
     'ENUM_NAME_OVERRIDES': {},
