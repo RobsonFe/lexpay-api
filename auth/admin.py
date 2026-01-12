@@ -30,10 +30,10 @@ class UserAdmin(BaseUserAdmin):
 	form = CustomUserChangeForm
 	add_form = CustomUserCreationForm
 	
-	list_display = ('email', 'username', 'name', 'cpf', 'phone', 'type_user', 'is_active', 'is_staff', 'created_at', 'updated_at')
-	list_filter = ('is_active', 'is_staff', 'type_user', 'created_at', 'updated_at')
+	list_display = ('id','email', 'username', 'name', 'cpf', 'phone', 'type_user', 'is_active', 'is_staff', 'created_at', 'updated_at')
+	list_filter = ('is_active', 'is_staff', 'type_user', 'created_at', 'updated_at', 'id')
 	search_fields = ('email', 'username', 'name', 'cpf', 'phone')
-	readonly_fields = ('created_at', 'updated_at', 'last_login')
+	readonly_fields = ('created_at', 'updated_at', 'last_login', 'id')
 	ordering = ('-created_at',)
 	
 	fieldsets = (
