@@ -135,11 +135,8 @@ class ProposalAcceptView(APIView):
                 if precatorio.status != StatusPrecatorioChoices.DISPONIVEL:
                     raise ValidationError("O precatório não está mais disponível.")
 
-                print(f"Antes: proposal.status = {proposal.status}")  
                 proposal.status = 'ACEITA' 
-                print(f"Depois de set: proposal.status = {proposal.status}") 
-
-               
+                
                 precatorio.status = StatusPrecatorioChoices.NEGOCIACAO 
 
                 
@@ -148,14 +145,13 @@ class ProposalAcceptView(APIView):
                     status='ENVIADA' 
                 ).exclude(id=proposal.id)
 
-                print(f"Outras propostas a rejeitar: {outras_propostas.count()}") 
                
                 outras_propostas.update(status='REJEITADA')
                 
                
                 precatorio.save()
                 proposal.save()
-                print(f"Após save: proposal.status = {proposal.status}") 
+               
             return Response(
                 {"message": "Proposta aceita e concorrentes rejeitadas com sucesso."},
                 status=status.HTTP_200_OK
