@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-
+from oficio.models import StatusPrecatorioChoices 
 
 
 from django.db import transaction
@@ -18,26 +18,21 @@ class CreateProposalView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # 1. Instanciamos o serializer PRIMEIRO para garantir que ele exista no 'except'
+        
         serializer = ProposalSerializer(data=request.data)
         
         try:
-            # 2. Validação explícita
             serializer.is_valid(raise_exception=True)
             
-            # 3. Transação Atômica (Requisito 1 da Task #11)
             with transaction.atomic():
-                # O .save() chama o seu método save() do model
                 proposal = serializer.save()
                 
-                # Resposta de sucesso
                 return Response(
                     {'message': 'Proposal created successfully', 'data': serializer.data}, 
                     status=status.HTTP_201_CREATED
                 )
         
         except Exception as e:
-            # Captura o erro "Proposal has no precatorio" ou erros de validação
             return Response(
                 {"error": str(e), "details": serializer.errors}, 
                 status=status.HTTP_400_BAD_REQUEST
@@ -120,38 +115,47 @@ class ProposalAcceptView(APIView):
         description="Endpoint para aceitar uma proposta. Rejeita automaticamente concorrentes.",
         responses={200: "{'message': 'Proposta aceita com sucesso'}", 400: "Erro de validação"}
     )
+
+
+    
     def post(self, request, pk):
-       
         proposal = get_object_or_404(Proposal, pk=pk)
         precatorio = proposal.precatorio
 
         try:
-            with transaction.atomic():
-                precatorio = proposal.precatorio
+            with transaction.atomic(): 
+                
                 
                 if proposal.data_vencimento < timezone.now().date():
-                    proposal.status = 'EXPIRADA'
+                    proposal.status = 'expirada' 
                     proposal.save()
                     raise ValidationError("Esta proposta está expirada.")
 
                 
-                if precatorio.status != 'DISPONIVEL':
-                    raise ValidationError("O precatório não está mais disponível para negociação.")
+                if precatorio.status != StatusPrecatorioChoices.DISPONIVEL:
+                    raise ValidationError("O precatório não está mais disponível.")
 
+                print(f"Antes: proposal.status = {proposal.status}")  
+                proposal.status = 'ACEITA' 
+                print(f"Depois de set: proposal.status = {proposal.status}") 
 
-                proposal.status = 'ACEITA'
-                proposal.save()
+               
+                precatorio.status = StatusPrecatorioChoices.NEGOCIACAO 
 
-                precatorio.status = 'EM_NEGOCIACAO'
-                precatorio.save()
-
+                
                 outras_propostas = Proposal.objects.filter(
                     precatorio=precatorio,
-                    status='ENVIADA'
+                    status='ENVIADA' 
                 ).exclude(id=proposal.id)
 
+                print(f"Outras propostas a rejeitar: {outras_propostas.count()}") 
+               
                 outras_propostas.update(status='REJEITADA')
-
+                
+               
+                precatorio.save()
+                proposal.save()
+                print(f"Após save: proposal.status = {proposal.status}") 
             return Response(
                 {"message": "Proposta aceita e concorrentes rejeitadas com sucesso."},
                 status=status.HTTP_200_OK
@@ -160,4 +164,4 @@ class ProposalAcceptView(APIView):
         except ValidationError as e:
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": "Erro interno ao processar aceite."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"Erro interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

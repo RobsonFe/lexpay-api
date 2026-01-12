@@ -60,34 +60,11 @@ class Proposal(models.Model):
         return f"Proposal: {self.id} - {self.status}, Proponente: {self.proponente} Valor: {self.valor_proposto} Vencimento: {self.data_vencimento}"
     
 
-    def validate(self):
-        diligencia_aprovada = DueDiligence.objects.filter(
-        precatorio=self.precatorio, 
-        status_analise='APROVADO' 
-    ).exists()
-
-
-        if self.precatorio.status != 'Disponível' or not diligencia_aprovada:
-            raise ValueError("O precatório não está disponível ou não possui Due Diligence aprovada.")
-
-        if self.valor_proposto <= 0:
-            raise ValueError("O valor proposto deve ser maior que zero.")
-        if self.taxa_desconto < 0 or self.taxa_desconto > 100:
-            raise ValueError("A taxa de desconto deve estar entre 0 e 100.")
-        if self.taxa_juros_anual < 0 or self.taxa_juros_anual > 100:
-            raise ValueError("A taxa de juros anual deve estar entre 0 e 100.")
-        if self.prazo_pagamento_meses <= 0:
-            raise ValueError("O prazo de pagamento em meses deve ser maior que zero.")
-        if self.taxa_desconto + self.taxa_juros_anual > 100:
-            raise ValueError("A soma das taxas de desconto e juros anual deve ser menor ou igual a 100.")
-
     def save(self, *args, **kwargs):
         # 1. Buscando dados do relacionamento (Precatorio)
         
         valor_face_precatorio = self.precatorio.valor_principal
         percentual_honorarios_precatorio = self.precatorio.percentual_honorarios
-        
-        self.validate()
         
         # CÁLCULO CEDENTE
 
