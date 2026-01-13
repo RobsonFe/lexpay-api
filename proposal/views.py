@@ -1,14 +1,14 @@
 from proposal.serializer import ProposalSerializer, ProposalHistorySerializer
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import  IsAuthenticated
 from rest_framework.response import Response
-from drf_spectacular.utils import    extend_schema
+from drf_spectacular.utils import    extend_schema, OpenApiExample
 from rest_framework.views import APIView
 from rest_framework import status
 from proposal.models import Proposal
 from django.shortcuts import get_object_or_404 
 from django.db import transaction
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from oficio.models import StatusPrecatorioChoices 
 
 
@@ -17,26 +17,56 @@ from django.db import transaction
 class CreateProposalView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=["Propostas"],
+        summary="Calculadora Automática de Propostas",
+        description="Endpoint que valida o status do precatório e Due Diligence aprovada, gerando cálculos financeiros automáticos.",
+        request=ProposalSerializer,
+        responses={201: ProposalSerializer, 400: "Erro de Validação"},
+        examples=[
+            OpenApiExample(
+                'Exemplo de Requisição (Broker)',
+                value={
+                    "precatorio": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                    "valor_proposto": "80000.00",
+                    "taxa_desconto": "20.00",
+                    "taxa_juros_anual": "12.50",
+                    "prazo_pagamento_meses": 24,
+                    "data_vencimento": "31-12-2026",
+                    "observacoes": "Observação sobre a proposta"
+                }
+            )
+        ]
+    )
     def post(self, request):
+        user = request.user
+
+        if user.type_user not in ['Broker', 'Admin']: 
+            raise PermissionDenied("Apenas usuários do tipo 'Broker' podem criar propostas de compra.")
+
         
         serializer = ProposalSerializer(data=request.data)
         
-        try:
-            serializer.is_valid(raise_exception=True)
-            
-            with transaction.atomic():
-                proposal = serializer.save()
-                
-                return Response(
-                    {'message': 'Proposal created successfully', 'data': serializer.data}, 
-                    status=status.HTTP_201_CREATED
-                )
         
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            with transaction.atomic():
+                proposal = serializer.save(proponente=user)
+
+                proposal._current_user = user
+                proposal._change_reason = "Criação via calculadora automática"
+                proposal.status = "ENVIADA"
+                
+                proposal.save()
+
+                return Response({
+                    "result": serializer.data
+                }, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response(
-                {"error": str(e), "details": serializer.errors}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({
+                "error": [str(e)]
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         
 class ProposalListView(APIView):
@@ -120,6 +150,8 @@ class ProposalAcceptView(APIView):
     
     def post(self, request, pk):
         proposal = get_object_or_404(Proposal, pk=pk)
+        proposal._current_user = request.user # Injeta para o Signal capturar
+        proposal._change_reason = "Proposta aceita pelo broker"
         precatorio = proposal.precatorio
 
         try:

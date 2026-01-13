@@ -6,39 +6,49 @@ from due.models import DueDiligence
 
 
 class ProposalSerializer(serializers.ModelSerializer):
+    valor_liquido_cedente = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    valor_liquido_proponente = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    lucro = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True, source='margem_lucro_percentual'
+    )
+    proponente_nome = serializers.ReadOnlyField(source='proponente.username')
+    
+    
     class Meta:
         model = Proposal
-        fields = 'id', 'status', 'valor_proposto', 'taxa_desconto', 'taxa_juros_anual', 'prazo_pagamento_meses', 'valor_liquido_cedente', 'valor_liquido_proponente', 'data_vencimento', 'margem_lucro_percentual', 'precatorio', 'proponente'
-        read_only_fields = ('id', 'created_at', 'updated_at','valor_liquido_cedente', 'valor_liquido_proponente', 'margem_lucro_percentual')
+        fields = [
+            'id', 'precatorio', 'proponente_nome', 'valor_proposto', 
+            'taxa_desconto', 'taxa_juros_anual', 'prazo_pagamento_meses', 
+            'data_vencimento', 'observacoes', 'valor_liquido_cedente', 
+            'valor_liquido_proponente', 'lucro', 'status', 'created_at'
+        ]
+        read_only_fields = ['status', 'created_at']
 
-    def create(self, validated_data):
-        # Validações específicas para criação
-        precatorio = validated_data.get('precatorio')
+    def validate(self, data):
+        precatorio = data.get('precatorio')
+        valor_proposto = data.get('valor_proposto')
+
+        if precatorio.status != StatusPrecatorioChoices.DISPONIVEL:
+            raise serializers.ValidationError(
+                f"O precatório deve estar com status '{StatusPrecatorioChoices.DISPONIVEL}'."
+            )
+
         diligencia_aprovada = DueDiligence.objects.filter(
             precatorio=precatorio, 
-            status_analise='APROVADO' 
+            status_analise=DueDiligence.StatusAnalise.APROVADO 
         ).exists()
 
-        if precatorio.status != StatusPrecatorioChoices.DISPONIVEL or not diligencia_aprovada:
-            raise serializers.ValidationError("O precatório não está disponível ou não possui Due Diligence aprovada.")
+        if not diligencia_aprovada:
+            raise serializers.ValidationError(
+                "Este precatório não possui uma Due Diligence APROVADA."
+            )
 
-        valor_proposto = validated_data.get('valor_proposto', 0)
-        taxa_desconto = validated_data.get('taxa_desconto', 0)
-        taxa_juros_anual = validated_data.get('taxa_juros_anual', 0)
-        prazo_pagamento_meses = validated_data.get('prazo_pagamento_meses', 0)
+        if valor_proposto > precatorio.valor_principal:
+            raise serializers.ValidationError(
+                {"valor_proposto": "O valor não pode ser superior ao valor principal do precatório."}
+            )
 
-        if valor_proposto <= 0:
-            raise serializers.ValidationError("O valor proposto deve ser maior que zero.")
-        if taxa_desconto < 0 or taxa_desconto > 100:
-            raise serializers.ValidationError("A taxa de desconto deve estar entre 0 e 100.")
-        if taxa_juros_anual < 0 or taxa_juros_anual > 100:
-            raise serializers.ValidationError("A taxa de juros anual deve estar entre 0 e 100.")
-        if prazo_pagamento_meses <= 0:
-            raise serializers.ValidationError("O prazo de pagamento em meses deve ser maior que zero.")
-        if taxa_desconto + taxa_juros_anual > 100:
-            raise serializers.ValidationError("A soma das taxas de desconto e juros anual deve ser menor ou igual a 100.")
-
-        return super().create(validated_data)
+        return data
 
 class ProposalHistorySerializer(serializers.ModelSerializer):
     class Meta:

@@ -8,6 +8,7 @@ def filter_endpoints_by_allowed_tags(result, generator, request, public):
         'Endereço',
         'Precatórios',
         'Propostas'
+        
     }
 
     paths = result['paths']
