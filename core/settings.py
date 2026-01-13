@@ -195,8 +195,8 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Endereço', 'description': 'Configurações referentes aos endereços do sistema'},
         {'name': 'Precatórios', 'description': 'Configurações referentes aos precatórios do sistema'},
         {'name': 'Propostas', 'description': 'Configurações referentes às propostas de Antecipação de precatórios'},
-        {'name': 'Calculadora', 'description': 'Configurações referentes à calculadora de rentabilidade'},
     ],
+    
     'SORT_OPERATIONS': False,
     'ENUM_NAME_OVERRIDES': {},
     'SCHEMA_PATH_PREFIX': '/api/v1',

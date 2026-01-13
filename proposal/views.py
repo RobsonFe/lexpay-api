@@ -3,7 +3,7 @@ from rest_framework.permissions import  IsAuthenticated
 from rest_framework.response import Response
 from drf_spectacular.utils import    extend_schema, OpenApiExample
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework import status, generics
 from proposal.models import Proposal
 from django.shortcuts import get_object_or_404 
 from django.db import transaction
@@ -14,8 +14,10 @@ from oficio.models import StatusPrecatorioChoices
 
 from django.db import transaction
 
-class CreateProposalView(APIView):
+class CreateProposalView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
+    queryset = Proposal.objects.all()
+    serializer_class = ProposalSerializer
 
     @extend_schema(
         tags=["Propostas"],
@@ -38,17 +40,13 @@ class CreateProposalView(APIView):
             )
         ]
     )
-    def post(self, request):
-        user = request.user
+    def perform_create(self, serializer):
+      
+        user = self.request.user
 
         if user.type_user not in ['Broker', 'Admin']: 
             raise PermissionDenied("Apenas usuários do tipo 'Broker' podem criar propostas de compra.")
 
-        
-        serializer = ProposalSerializer(data=request.data)
-        
-        
-        serializer.is_valid(raise_exception=True)
 
         try:
             with transaction.atomic():
@@ -150,7 +148,7 @@ class ProposalAcceptView(APIView):
     
     def post(self, request, pk):
         proposal = get_object_or_404(Proposal, pk=pk)
-        proposal._current_user = request.user # Injeta para o Signal capturar
+        proposal._current_user = self.request.user 
         proposal._change_reason = "Proposta aceita pelo broker"
         precatorio = proposal.precatorio
 
