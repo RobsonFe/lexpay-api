@@ -53,7 +53,6 @@ class CreateProposalView(generics.CreateAPIView):
                 proposal = serializer.save(proponente=user)
 
                 proposal._current_user = user
-                proposal._change_reason = "Criação via calculadora automática"
                 proposal.status = "ENVIADA"
                 
                 proposal.save()
