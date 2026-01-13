@@ -175,7 +175,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['username']
 
     def __str__(self):
-        return f"{self.name or self.username} - {self.cpf}"
+        return f"{self.name or self.username} - {self.cpf}- {self.id} "
 
     def has_perm(self, perm, obj=None):
         return self.is_superuser
