@@ -122,74 +122,74 @@ class Precatorio(models.Model):
         return f"{self.numero_processo} - {self.get_status_display()}"
 
 def validate_file_extension(value):
-	"""
-	Valida se o arquivo tem extensão permitida (PDF ou Word).
-	"""
-	ext = os.path.splitext(value.name)[1].lower()
-	allowed_extensions = ['.pdf', '.doc', '.docx']
-	if ext not in allowed_extensions:
-		raise ValidationError(
-			_('Formato de arquivo não permitido. Apenas arquivos PDF (.pdf) e Word (.doc, .docx) são aceitos.')
-		)
+    """
+    Valida se o arquivo tem extensão permitida (PDF ou Word).
+    """
+    ext = os.path.splitext(value.name)[1].lower()
+    allowed_extensions = ['.pdf', '.doc', '.docx']
+    if ext not in allowed_extensions:
+        raise ValidationError(
+            _('Formato de arquivo não permitido. Apenas arquivos PDF (.pdf) e Word (.doc, .docx) são aceitos.')
+        )
 
 def validate_file_size(value):
-	"""
-	Valida o tamanho máximo do arquivo (10MB).
-	"""
-	max_size = 10 * 1024 * 1024
-	if value.size > max_size:
-		raise ValidationError(
-			_('O arquivo é muito grande. Tamanho máximo permitido: 10MB.')
-		)
+    """
+    Valida o tamanho máximo do arquivo (10MB).
+    """
+    max_size = 10 * 1024 * 1024
+    if value.size > max_size:
+        raise ValidationError(
+            _('O arquivo é muito grande. Tamanho máximo permitido: 10MB.')
+        )
 
 class Documento(models.Model):
-	"""
-	Tabela para armazenar os documentos (PDFs e Word) relacionados aos precatórios.
-	Suporta: Ofício Requisitório, Memória de Cálculo, Contrato Social, etc.
-	"""
-	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-	precatorio = models.ForeignKey(Precatorio, on_delete=models.CASCADE, related_name='documentos')
-	titulo = models.CharField(max_length=100, help_text="Ex: Ofício Requisitório, Memória de Cálculo")
-	arquivo = models.FileField(
-		upload_to='precatorios/docs/%Y/%m/',
-		validators=[validate_file_extension, validate_file_size],
-		help_text="Apenas arquivos PDF (.pdf) e Word (.doc, .docx) são aceitos. Tamanho máximo: 10MB"
-	)
-	enviado_em = models.DateTimeField(auto_now_add=True)
+    """
+    Tabela para armazenar os documentos (PDFs e Word) relacionados aos precatórios.
+    Suporta: Ofício Requisitório, Memória de Cálculo, Contrato Social, etc.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    precatorio = models.ForeignKey(Precatorio, on_delete=models.CASCADE, related_name='documentos')
+    titulo = models.CharField(max_length=100, help_text="Ex: Ofício Requisitório, Memória de Cálculo")
+    arquivo = models.FileField(
+        upload_to='precatorios/docs/%Y/%m/',
+        validators=[validate_file_extension, validate_file_size],
+        help_text="Apenas arquivos PDF (.pdf) e Word (.doc, .docx) são aceitos. Tamanho máximo: 10MB"
+    )
+    enviado_em = models.DateTimeField(auto_now_add=True)
 
-	class Meta:
-		db_table = 'precatorios_documentos'
-		verbose_name = 'Documento'
-		verbose_name_plural = 'Documentos'
-		ordering = ['-enviado_em']
+    class Meta:
+        db_table = 'precatorios_documentos'
+        verbose_name = 'Documento'
+        verbose_name_plural = 'Documentos'
+        ordering = ['-enviado_em']
 
-	def __str__(self):
-		return f"{self.titulo} - {self.precatorio.numero_processo}"
+    def __str__(self):
+        return f"{self.titulo} - {self.precatorio.numero_processo}"
 
-	def get_file_extension(self):
-		"""
-		Retorna a extensão do arquivo.
-		"""
-		if self.arquivo:
-			return os.path.splitext(self.arquivo.name)[1].lower()
-		return None
+    def get_file_extension(self):
+        """
+        Retorna a extensão do arquivo.
+        """
+        if self.arquivo:
+            return os.path.splitext(self.arquivo.name)[1].lower()
+        return None
 
-	def get_file_size_mb(self):
-		"""
-		Retorna o tamanho do arquivo em MB.
-		"""
-		if self.arquivo:
-			return round(self.arquivo.size / (1024 * 1024), 2)
-		return None
+    def get_file_size_mb(self):
+        try:
+            if self.arquivo:
+                return round(self.arquivo.size / (1024 * 1024), 2)
+        except FileNotFoundError:
+            return 0.0
+        return None
 
-	def is_pdf(self):
-		"""
-		Verifica se o arquivo é um PDF.
-		"""
-		return self.get_file_extension() == '.pdf'
+    def is_pdf(self):
+        """
+        Verifica se o arquivo é um PDF.
+        """
+        return self.get_file_extension() == '.pdf'
 
-	def is_word(self):
-		"""
-		Verifica se o arquivo é um documento Word.
-		"""
-		return self.get_file_extension() in ['.doc', '.docx']
+    def is_word(self):
+        """
+        Verifica se o arquivo é um documento Word.
+        """
+        return self.get_file_extension() in ['.doc', '.docx']

@@ -4,6 +4,7 @@ from oficio.serializer import UserLightSerializer, PrecatorioSerializer
 
 
 class DueDiligenceSerializer(serializers.ModelSerializer):
+    
     precatorio_detalhes = PrecatorioSerializer(source='precatorio', read_only=True)
 
     user_detalhes = UserLightSerializer(source='analista', read_only=True)
@@ -76,3 +77,19 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
             data['documento_aprovado'] = True
         
         return data
+    
+
+class DueDiligenceCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= DueDiligence
+        fields = ['id', 'precatorio', 'observacoes', 'prioridade']
+        read_only_fields = ['id','data_criacao']
+    
+    def validate_precatorio(self, value):
+        if DueDiligence.objects.filter(precatorio=value).exists():
+            raise serializers.ValidationError("Este precatório já possui uma Due Diligence cadastrada.")
+        return value
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return DueDiligence.objects.create(analista=user, **validated_data)
