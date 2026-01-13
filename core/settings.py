@@ -194,6 +194,8 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Usuário', 'description': 'Configurações referentes aos usuários do sistema'},
         {'name': 'Endereço', 'description': 'Configurações referentes aos endereços do sistema'},
         {'name': 'Precatórios', 'description': 'Configurações referentes aos precatórios do sistema'},
+        {'name': 'Due Diligence - Operacional', 'description': 'Rotas operacionais de Due Diligence'},
+        {'name': 'Due Diligence - Gestão', 'description': 'Rotas de gestão de Due Diligence'},
     ],
     'SORT_OPERATIONS': False,
     'ENUM_NAME_OVERRIDES': {},

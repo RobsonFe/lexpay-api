@@ -57,6 +57,7 @@ class DueCreateView(generics.ListCreateAPIView):
 class DueDiligenceListCreateView(generics.ListCreateAPIView):
     serializer_class = DueDiligenceSerializer
     permission_classes = [IsBrokerOrAdmin]
+    queryset = DueDiligence.objects.all()
 
     def get_queryset(self):
         user = self.request.user
@@ -82,16 +83,13 @@ class DueDiligenceListCreateView(generics.ListCreateAPIView):
         summary="Atualizar Diligência (Parcial)",
         description="Atualiza parcialmente campos da diligência (ex: alterar status ou observações).",
         tags=["Due Diligence - Operacional"]
-    ),
-    delete=extend_schema(
-        summary="Remover Diligência",
-        description="Remove uma diligência do sistema.",
-        tags=["Due Diligence - Operacional"]
     )
 )
 class DueDiligenceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = DueDiligenceSerializer
     permission_classes = [IsBrokerOrAdmin | IsAdministradorOrAdvogado]
+    queryset = DueDiligence.objects.all()
+
     lookup_field = 'pk'
 
     def get_queryset(self):
@@ -105,37 +103,3 @@ class DueDiligenceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         if is_admin:
             return queryset.all()
         return queryset.filter(analista=user)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# class DueDiligenceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
-#     serializer_class = DueDiligenceSerializer
-#     permission_classes = [IsBrokerOrAdmin | IsAdministradorOrAdvogado]
-#     lookup_field = 'pk'
-
-#     def get_queryset(self):
-#         user = self.request.user
-#         queryset = DueDiligence.objects.select_related(
-#             'precatorio', 'analista', 'precatorio__tribunal', 'precatorio__ente_devedor'
-#         )
-#         if user.is_staff or getattr(user, 'type_user', '') == TypeUserChoices.ADMINISTRADOR:
-#             return queryset.all()
-#         return queryset.filter(analista=user)
