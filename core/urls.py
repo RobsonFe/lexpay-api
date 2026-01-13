@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/v1/auth/', include('auth.urls')),
     path('api/v1/oficio/', include('oficio.urls')),
     path('api/v1/due/', include('due.urls')),
+    path('api/v1/proposal/', include('proposal.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),

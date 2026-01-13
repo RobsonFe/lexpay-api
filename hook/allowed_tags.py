@@ -9,6 +9,7 @@ def filter_endpoints_by_allowed_tags(result, generator, request, public):
         'Precatórios',
         'Due Diligence - Operacional',
         'Due Diligence - Gestão',
+        'Propostas'
     }
 
     paths = result['paths']
