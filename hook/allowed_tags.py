@@ -7,6 +7,7 @@ def filter_endpoints_by_allowed_tags(result, generator, request, public):
         'Autenticação',
         'Endereço',
         'Precatórios',
+        'Due Diligence',
         'Propostas'
     }
 

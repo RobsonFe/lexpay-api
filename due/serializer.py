@@ -4,6 +4,7 @@ from oficio.serializer import UserLightSerializer, PrecatorioSerializer
 
 
 class DueDiligenceSerializer(serializers.ModelSerializer):
+    
     precatorio_detalhes = PrecatorioSerializer(source='precatorio', read_only=True)
 
     user_detalhes = UserLightSerializer(source='analista', read_only=True)
@@ -76,3 +77,11 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
             data['documento_aprovado'] = True
         
         return data
+    
+
+class DueDiligenceCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= DueDiligence
+        fields = ['id', 'precatorio', 'observacoes', 'prioridade', 'analista']
+        read_only_fields = ['id','analista']
+    
