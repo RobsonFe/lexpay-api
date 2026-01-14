@@ -1,4 +1,6 @@
 from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
 from due.permissions import IsBrokerOrAdmin, IsAdministradorOrAdvogado
@@ -150,6 +152,38 @@ class DueCreateView(generics.CreateAPIView):
     permission_classes = [IsAdministradorOrAdvogado]
     serializer_class = DueDiligenceCreateSerializer
     queryset = DueDiligence.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            """Invoca o metôdo pai de CreateAPIView e encaminha o resquest para que seja feita a mentagem o Response"""
+            response = super().create(request, *args, **kwargs)
+            return Response(
+                {
+                    "message": "Due Diligence criada com sucesso",
+                    "result": response.data
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except ValidationError as e:
+            return Response(
+                {
+                    "message": "Erro de validação",
+                    "errors": e.detail
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        except IntegrityError:
+            return Response(
+                {
+                    "message": "Erro ao criar due diligence", 
+                    "errors": {
+                        "precatorio": ["Já existe uma Due Diligence ativa para este precatório."]
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def perform_create(self, serializer):
         user = self.request.user
