@@ -144,8 +144,8 @@ class ProposalUpdateView(APIView):
             OpenApiExample(
                 'Exemplo de Requisição (Brokers e admins)',
                 value={
-                    "results": [
-                        {
+                    
+                        
                             "valor_proposto": "100000.00",
                             "taxa_desconto": "20.00",
                             "taxa_juros_anual": "12.50",
@@ -154,8 +154,7 @@ class ProposalUpdateView(APIView):
                             "observacoes": "Atualização de proposta",
                             "status": "ENVIADA",
                             
-                        }
-                    ]
+                    
                 }
             )
         ]
