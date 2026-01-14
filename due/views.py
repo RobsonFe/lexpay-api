@@ -1,9 +1,9 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotFound
 from django.db import IntegrityError
-from due.permissions import IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado
+from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin)
 from due.models import DueDiligence, TypeUserChoices
 from due.serializer import DueDiligenceSerializer, DueDiligenceCreateSerializer
 from auth.models import TypeUserChoices
@@ -11,8 +11,10 @@ from auth.models import TypeUserChoices
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
+    OpenApiParameter,
     OpenApiExample,
     OpenApiResponse,
+    OpenApiTypes
 )
 
 @extend_schema_view(
@@ -33,13 +35,67 @@ from drf_spectacular.utils import (
         tags=["Due Diligence"]
     ),
 )
-class DueCreateView(generics.ListCreateAPIView):
+class DueListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAdminOrAdvogado]
     serializer_class = DueDiligenceCreateSerializer
     queryset = DueDiligence.objects.all()
 
     def get_queryset(self):
         return DueDiligence.objects.select_related('analista','precatorio').all()
+    
+
+@extend_schema(
+    summary="Edição de Diligencias - Admin",
+    description="Somente usuários Admin podem realizer alterações nas diligencias.",
+    tags=["Due Diligence"],
+    responses={
+        200: OpenApiResponse(
+            response=DueDiligenceSerializer,
+            description='Diligencia atualizada com sucesso'
+            ),
+        401: OpenApiResponse(
+            description="Não autenticado"
+        ),
+        403: OpenApiResponse(
+            description="Você não tem permissão para editar diligencias"
+        ),
+        404: OpenApiResponse(
+            description="Diligencia não localizada na base."
+        )
+    }
+)
+class DueUpdateView(generics.UpdateAPIView):
+    queryset = DueDiligence.objects.all()
+    permission_classes = [IsAdmin]
+    serializer_class = DueDiligenceSerializer
+    http_method_names = ['patch']
+
+    def update(self, request, *args, **kwargs):
+        try:
+           response = super().update(request, *args, **kwargs)
+           return Response(
+               {
+                "message": "Diligencia ataualizada com sucesso",
+                "result": response.data
+               }, status=status.HTTP_200_OK
+           )
+        except ValidationError as e:
+            return Response(
+                {
+                "message": "Erro de validação",
+                "erros": e.detail
+                },status=status.HTTP_400_BAD_REQUEST
+            )
+        except NotFound:
+            return Response(
+                {
+                "message":"Diligencia não localizada"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+
+
 
 @extend_schema_view(
     get=extend_schema(
