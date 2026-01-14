@@ -139,15 +139,41 @@ class ProposalUpdateView(APIView):
             200: ProposalSerializer,
             400: "Bad Request"
         },
-        description="Rota para atualização de uma proposta de Antecipação de um precatório"
+        description="Rota para atualização de uma proposta de Antecipação de um precatório",
+        examples=[
+            OpenApiExample(
+                'Exemplo de Requisição (Brokers e admins)',
+                value={
+                    "results": [
+                        {
+                            "valor_proposto": "100000.00",
+                            "taxa_desconto": "20.00",
+                            "taxa_juros_anual": "12.50",
+                            "prazo_pagamento_meses": 1,
+                            "data_vencimento": "31-12-2026",
+                            "observacoes": "Atualização de proposta",
+                            "status": "ENVIADA",
+                            
+                        }
+                    ]
+                }
+            )
+        ]
     )
+        
+    
     
     def patch(self, request, pk, *args, **kwargs):
         try:
             proposal = get_object_or_404(Proposal, pk=pk)
-            serializer = ProposalSerializer(proposal, data=request.data)
+            serializer = ProposalSerializer(proposal, data=request.data, partial=True)
+          
             serializer.is_valid(raise_exception=True)
+            
+            
             serializer.save()
+            
+            
             return Response({'message': 'Proposta atualizada com sucesso!', 'data': serializer.data}, status=status.HTTP_200_OK)
        
         except Exception as e:
