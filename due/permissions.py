@@ -39,4 +39,10 @@ class IsAdminBrokerOrAdvogado(permissions.BasePermission):
             TypeUserChoices.ADMINISTRADOR,
             TypeUserChoices.BROKER
         ]
-    
+
+class IsAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return user.type_user == TypeUserChoices.ADMINISTRADOR
