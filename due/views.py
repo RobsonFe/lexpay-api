@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
-from due.permissions import IsBrokerOrAdmin, IsAdministradorOrAdvogado
+from due.permissions import IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado
 from due.models import DueDiligence, TypeUserChoices
 from due.serializer import DueDiligenceSerializer, DueDiligenceCreateSerializer
 from auth.models import TypeUserChoices
@@ -34,7 +34,7 @@ from drf_spectacular.utils import (
     ),
 )
 class DueCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAdministradorOrAdvogado]
+    permission_classes = [IsAdminOrAdvogado]
     serializer_class = DueDiligenceCreateSerializer
     queryset = DueDiligence.objects.all()
 
@@ -79,11 +79,6 @@ class DueDiligenceListCreateView(generics.ListCreateAPIView):
         description="Retorna uma diligência específica.",
         tags=["Due Diligence"]
     ),
-    put=extend_schema(
-        summary="Atualizar Diligência",
-        description="Atualizar diligência.",
-        tags=["Due Diligence"]
-    ),
     patch=extend_schema(
         summary="Atualizar Diligência-PATCH",
         description="Atualiza parcialmente campos.",
@@ -92,7 +87,7 @@ class DueDiligenceListCreateView(generics.ListCreateAPIView):
 )
 class DueDiligenceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = DueDiligenceSerializer
-    permission_classes = [IsBrokerOrAdmin | IsAdministradorOrAdvogado]
+    permission_classes = [IsAdminBrokerOrAdvogado]
     queryset = DueDiligence.objects.all()
 
     lookup_field = 'pk'
@@ -149,7 +144,7 @@ class DueDiligenceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     }
 )
 class DueCreateView(generics.CreateAPIView):
-    permission_classes = [IsAdministradorOrAdvogado]
+    permission_classes = [IsAdminOrAdvogado]
     serializer_class = DueDiligenceCreateSerializer
     queryset = DueDiligence.objects.all()
     
