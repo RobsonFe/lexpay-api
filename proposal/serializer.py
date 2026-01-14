@@ -3,6 +3,7 @@ from rest_framework import serializers
 from proposal.models import Proposal, ProposalHistory
 from oficio.models import StatusPrecatorioChoices
 from due.models import DueDiligence
+from oficio.serializer import PrecatorioSerializer
 
 
 class ProposalSerializer(serializers.ModelSerializer):
@@ -12,12 +13,13 @@ class ProposalSerializer(serializers.ModelSerializer):
         max_digits=18, decimal_places=2, read_only=True, source='margem_lucro_percentual'
     )
     proponente_nome = serializers.ReadOnlyField(source='proponente.username')
+    precatorio_detalhes = PrecatorioSerializer(source='precatorio', read_only=True)
     
     
     class Meta:
         model = Proposal
         fields = [
-            'id', 'precatorio', 'proponente_nome', 'valor_proposto', 
+            'id', 'precatorio', 'precatorio_detalhes', 'proponente_nome', 'valor_proposto', 
             'taxa_desconto', 'taxa_juros_anual', 'prazo_pagamento_meses', 
             'data_vencimento', 'observacoes', 'valor_liquido_cedente', 
             'valor_liquido_proponente', 'lucro', 'status', 'created_at'
@@ -25,7 +27,7 @@ class ProposalSerializer(serializers.ModelSerializer):
         read_only_fields = ['status', 'created_at']
 
     def validate(self, data):
-        precatorio = data.get('precatorio')
+        precatorio = data.get('precatorio') or (self.instance.precatorio if self.instance else None)
         valor_proposto = data.get('valor_proposto')
 
         if precatorio.status != StatusPrecatorioChoices.DISPONIVEL:
