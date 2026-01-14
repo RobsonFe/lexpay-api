@@ -82,14 +82,6 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
 class DueDiligenceCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model= DueDiligence
-        fields = ['id', 'precatorio', 'observacoes', 'prioridade']
-        read_only_fields = ['id','data_criacao']
+        fields = ['id', 'precatorio', 'observacoes', 'prioridade', 'analista']
+        read_only_fields = ['id','analista']
     
-    def validate_precatorio(self, value):
-        if DueDiligence.objects.filter(precatorio=value).exists():
-            raise serializers.ValidationError("Este precatório já possui uma Due Diligence cadastrada.")
-        return value
-
-    def create(self, validated_data):
-        user = self.context['request'].user
-        return DueDiligence.objects.create(analista=user, **validated_data)
