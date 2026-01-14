@@ -10,8 +10,6 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from oficio.models import StatusPrecatorioChoices 
-
-
 from django.db import transaction
 
 class CreateProposalView(generics.CreateAPIView):
@@ -47,7 +45,6 @@ class CreateProposalView(generics.CreateAPIView):
         if user.type_user not in ['Broker', 'Admin']: 
             raise PermissionDenied("Apenas usuários do tipo 'Broker' podem criar propostas de compra.")
 
-
         try:
             with transaction.atomic():
                 proposal = serializer.save(proponente=user)
@@ -65,10 +62,11 @@ class CreateProposalView(generics.CreateAPIView):
                 "error": [str(e)]
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        
 class ProposalListView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ProposalSerializer
     
+
     @extend_schema(
         request=None, 
         responses={
@@ -76,13 +74,55 @@ class ProposalListView(APIView):
             400: "Bad Request"
         },
         tags=["Propostas"],
-        description="Rota para listagem de propostas de Antecipação de precatórios"
-        
+        description="Rota para listagem de propostas de Antecipação de precatórios de acordo com o usuário logado",
+        examples=[
+            OpenApiExample(
+                'Exemplo de Retorno',
+                value={
+                    "results": [
+                        {
+                            "id": "357ab638-43c2-425d-b5a9-4f277c39fc84",
+                            "precatorio": "3f09ae47-16ef-4c45-ab31-43c53446aaa4",
+                            "proponente_nome": "Spatialcaver3",
+                            "valor_proposto": "100000.00",
+                            "taxa_desconto": "20.00",
+                            "taxa_juros_anual": "12.50",
+                            "prazo_pagamento_meses": 1,
+                            "data_vencimento": "31-12-2026",
+                            "observacoes": None,
+                            "valor_liquido_cedente": "95000.00",
+                            "valor_liquido_proponente": "99013.64",
+                            "lucro": "100.00",
+                            "status": "RASCUNHO",
+                            "created_at": "13-01-2026 11:18"
+                        }
+                    ]
+                }
+            )
+        ]
     )
+        
+       
     def get(self, request):
-        propopsals = Proposal.objects.all()
-        serializer = ProposalSerializer(propopsals, many=True)
-        return Response({'message': 'Proposals', 'Results': serializer.data }, status=status.HTTP_200_OK)
+        user = self.request.user
+        
+        try:
+            if user.type_user == 'Administrador':
+                queryset = Proposal.objects.all()
+            
+            elif user.type_user == 'Broker':
+                queryset = Proposal.objects.filter(proponente=user)
+            
+            elif user.type_user == 'Cedente':
+                queryset = Proposal.objects.filter(precatorio__cedente=user)
+
+
+            serializer = self.serializer_class(queryset, many=True)
+            return Response({'results': serializer.data}, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
     
   
         
