@@ -218,9 +218,6 @@ class ProposalAcceptView(APIView):
     )
 
 
-
-
-
     def patch(self, request, pk):
         try:
             ProposalService.aceitar_proposta(pk, request.user)
@@ -232,8 +229,6 @@ class ProposalAcceptView(APIView):
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": f"Erro crítico: {str(e)}"}, status=500)
-        
-        
         
         
 class InvestorOpportunitiesView(APIView):
