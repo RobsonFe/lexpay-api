@@ -8,6 +8,7 @@ from proposal.models import Proposal
 from django.shortcuts import get_object_or_404 
 from django.db import transaction
 from django.utils import timezone
+from proposal.services import ProposalService
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from oficio.models import StatusPrecatorioChoices 
 from django.db import transaction
@@ -205,58 +206,29 @@ class ProposalAcceptView(APIView):
     @extend_schema(
         tags=["Propostas"],
         description="Endpoint para aceitar uma proposta. Rejeita automaticamente concorrentes.",
-        responses={200: "{'message': 'Proposta aceita com sucesso'}", 400: "Erro de validação"}
+        responses={200: "{'message': 'Proposta aceita com sucesso'}", 400: "Erro de validação"},
+        examples=[
+            OpenApiExample(
+                'Exemplo de Retorno',
+                value={
+                    "message": "Proposta aceita e concorrentes rejeitadas com sucesso."
+                }
+            )
+        ]
     )
 
 
-    
-    def post(self, request, pk):
-        proposal = get_object_or_404(Proposal, pk=pk)
-        proposal._current_user = self.request.user 
-        proposal._change_reason = "Proposta aceita pelo broker"
-        precatorio = proposal.precatorio
-
+    def patch(self, request, pk):
         try:
-            with transaction.atomic(): 
-                
-                
-                if proposal.data_vencimento < timezone.now().date():
-                    proposal.status = 'expirada' 
-                    proposal.save()
-                    raise ValidationError("Esta proposta está expirada.")
-
-                
-                if precatorio.status != StatusPrecatorioChoices.DISPONIVEL:
-                    raise ValidationError("O precatório não está mais disponível.")
-
-                proposal.status = 'ACEITA' 
-                
-                precatorio.status = StatusPrecatorioChoices.NEGOCIACAO 
-
-                
-                outras_propostas = Proposal.objects.filter(
-                    precatorio=precatorio,
-                    status='ENVIADA' 
-                ).exclude(id=proposal.id)
-
-               
-                outras_propostas.update(status='REJEITADA')
-                
-               
-                precatorio.save()
-                proposal.save()
-               
+            ProposalService.aceitar_proposta(pk, request.user)
             return Response(
-                {"message": "Proposta aceita e concorrentes rejeitadas com sucesso."},
+                {"message": "Proposta aceita e concorrentes rejeitadas."},
                 status=status.HTTP_200_OK
             )
-
         except ValidationError as e:
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": f"Erro interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
+            return Response({"error": f"Erro crítico: {str(e)}"}, status=500)
         
         
 class InvestorOpportunitiesView(APIView):
