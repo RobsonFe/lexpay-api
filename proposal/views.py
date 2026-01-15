@@ -209,8 +209,9 @@ class ProposalAcceptView(APIView):
     )
 
 
-    
-    def post(self, request, pk):
+
+
+    def patch(self, request, pk):
         proposal = get_object_or_404(Proposal, pk=pk)
         proposal._current_user = self.request.user 
         proposal._change_reason = "Proposta aceita pelo broker"
