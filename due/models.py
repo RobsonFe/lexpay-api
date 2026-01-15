@@ -18,7 +18,7 @@ class DueDiligence(models.Model):
 
     class PrioridadeType(models.TextChoices):
         BAIXA = "BAIXA", "Baixa"
-        MEDIA = "MEDIA", "Média"
+        MEDIA = "MEDIA", "Media"
         ALTA = "ALTA", "Alta"
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
