@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     DueDiligenceListCreateView, 
     DueDiligenceRetrieveUpdateView, 
-    DueCreateView, DueUpdateView
+    DueCreateView, DueUpdateView, DueListView
     )
 
 urlpatterns = [
@@ -10,6 +10,7 @@ urlpatterns = [
     path('diligencias/<uuid:pk>/', DueDiligenceRetrieveUpdateView.as_view(), name='diligence-detail-update'),
 
     path('criar/', DueCreateView.as_view(), name='due-create'),
-    path('atualizar/<uuid:pk>/', DueUpdateView.as_view(), name='due-update')
-
+    path('atualizar/<uuid:pk>/', DueUpdateView.as_view(), name='due-update'),
+    path('listar/ativas/', DueListView.as_view(), name='due-list-active')
+    
 ]

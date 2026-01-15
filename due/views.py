@@ -1,4 +1,5 @@
 from rest_framework import generics
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError, NotFound
@@ -43,6 +44,69 @@ class DueListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return DueDiligence.objects.select_related('analista','precatorio').all()
     
+@extend_schema(
+    tags=["Due Diligence"],
+    summary="Listar diligências ativas",
+    description="Retorna a lista com todas as diligênicas com status diferente de rejeitado e aprovado",
+    responses={
+        200: OpenApiResponse(
+            description="Lista de diligências ativas",
+            response=DueDiligenceSerializer(many=True), 
+            examples=[
+                OpenApiExample(
+                    name="Lista de diligencias",
+                    summary="apenas as ativas",
+                    value=[
+                        {
+                            "id": "449661cb-50b4-40b1-90e1-fefc7a7320c1",
+                            "status_analise": "PENDENTE",
+                            "precatorio_detalhes": {
+                                "numero_processo": "0002938-99.2025.8.26.0675",
+                                "valor_principal": "190000.00",
+                                "tribunal": {"nome": "TJSP", "sigla": "TJSP"}
+                            },
+                            "user_detalhes": {
+                                "name": "Mario Advogado",
+                                "email": "mario@lexpay.com.br"
+                            }
+                        },
+                        {
+                            "id": "a1743a3e-51d4-4482-a988-e003aca13e26",
+                            "status_analise": "EM_ANALISE",
+                            "precatorio_detalhes": {
+                                "numero_processo": "111555-88.2024.8.26.0000",
+                                "valor_principal": "50000.00",
+                                "tribunal": {"nome": "TRF3", "sigla": "TRF3"}
+                            },
+                            "user_detalhes": {
+                                "name": "Mario Advogado",
+                                "email": "mario@lexpay.com.br"
+                            }
+                        }
+                    ]
+                )
+            ]
+        ),
+        403: OpenApiResponse(description="Somente Admin ou Advogados podem realizar esta ação.")
+    }
+)
+class DueListView(generics.ListAPIView):
+    permission_classes = [IsAdminOrAdvogado]
+    serializer_class = DueDiligenceSerializer
+    queryset = DueDiligence.objects.all()
+
+    def get_queryset(self):
+        queryset = DueDiligence.objects.select_related('precatorio','analista').exclude(
+            ~Q(status_analise__in = [
+                    DueDiligence.StatusAnalise.APROVADO,
+                    DueDiligence.StatusAnalise.REJEITADO
+                ])
+            )
+        user = self.request.user
+        if user.type_user == TypeUserChoices.ADVOGADO:
+            return queryset.filter(analista=user)
+        return queryset
+
 
 @extend_schema(
     summary="Edição de Diligencias - Admin",
