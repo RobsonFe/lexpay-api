@@ -14,5 +14,6 @@ urlpatterns = [
     path('criar/', DueCreateView.as_view(), name='due-create'),
     path('atualizar/<uuid:pk>/', DueUpdateView.as_view(), name='due-update'),
     path('listar/ativas/', DueListView.as_view(), name='due-list-active'),
-    path('listar/status/<str:prioridade>/', DueListPrioridadeView.as_view(), name='due-list-prioridade')
+    path('listar/status/', DueListPrioridadeView.as_view(), name='due-list-prioridade'),
+    # path('listar/por-usuario', DueListMyDue.as_view(), name='due-list-for-user')
 ]

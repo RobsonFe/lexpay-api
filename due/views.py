@@ -33,7 +33,7 @@ from drf_spectacular.utils import (
     get=extend_schema(
         summary="Listar todas as Diligências",
         description="Lista com todas de diligências.",
-        responses={200: DueDiligenceCreateSerializer(many=True)},
+        responses={200: DueDiligenceCreateSerializer(many='True')},
         tags=["Due Diligence"]
     ),
 )
@@ -109,67 +109,60 @@ class DueListView(generics.ListAPIView):
         return queryset
 
 @extend_schema(
-    summary="Listar por Prioridade",
-    description="Retorna lista por prioridade (baixa, média, alta)",
+    summary="Listar Diligências por prioridade ou todas que pertencem ao user logado",
+    description="Lista as diligências do usuário logado, se for passado o parâmetro (ALTA, MEDIO, BAIXO) e feito um filtro nas diligências conforme a prioridade. Se não tiver vai retorna todas que pertencem ao user logado.",
     tags=["Due Diligence"],
     parameters=[
         OpenApiParameter(
             name='prioridade',
             type=OpenApiTypes.STR,
-            location=OpenApiParameter.PATH,
-            description="Níveis de prioridade (maiusculo e minusculo)",
-            enum=['ALTA', 'MEDIA', 'BAIXA']
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description="A prioridade é opcional (ALTA, MEDIA, BAIXA)",
+            enum=['alta', 'media', 'baixa']
         )
     ],
     responses={
         200: OpenApiResponse(
-            description="Filtrando lista de prioridade com base nos paramêtros da patch params da rota.",
+            description="lista criada com sucesso.",
+            response=DueDiligenceSerializer(many=True),
             examples=[
                 OpenApiExample(
-                    name="Prioridade ALTA",
-                    summary="listagem com base na prioridade",
+                    name="Filtro (ALTA)",
+                    summary="/due/listar/status/?prioridade=alta - o valor ´?prioridade´é passada na requsição",
                     value=[
                         {
                             "id": "4b6dc310-13fd-4da0-8924-75345b65a687",
                             "prioridade": "ALTA",
                             "status_analise": "EM_ANALISE",
-                            "data_inicio_analise": "2026-01-14T10:00:00Z",
-                            "precatorio_detalhes": {
-                                "id": "2d01f2d0-c9d2-4d3a-88f8-6b5353c99061",
-                                "numero_processo": "0002938-99.2025.8.26.0675",
-                                "valor_principal": "190000.00",
-                                "ente_devedor": "Fazenda de SP"
-                            },
-                            "analista": {
-                                "id": "f771be14-e330-4fbd-91d6-ee90ded836dd",
-                                "name": "Dr. Mario Advogado",
-                                "email": "mario@lexpay.com.br"
-                            }
+                            "precatorio_detalhes": { "numero_processo": "0002938-99..." },
+                            "analista": { "name": "Lucia" }
+                        }
+                    ]
+                ),
+                OpenApiExample(
+                    name="Sem Filtro - retorna tudo que for seu",
+                    summary="due/listar/status/ - Se não envia parâmetros vai retornar tudo que é seu",
+                    value=[
+                        {
+                            "id": "4b6dc310...",
+                            "prioridade": "ALTA",
+                            "status_analise": "EM_ANALISE",
+                            "analista": { "name": "Lucia" }
                         },
                         {
-                            "id": "b2854b4f-62e5-5593-b099-f114bcb24f37",
-                            "prioridade": "ALTA",
+                            "id": "b2854b4f...",
+                            "prioridade": "BAIXA",
                             "status_analise": "PENDENTE",
-                            "data_inicio_analise": None,
-                            "precatorio_detalhes": {
-                                "id": "5e12f3e1-d0e3-5e4b-99f9-7c6464d00172",
-                                "numero_processo": "111555-88.2024.8.26.0000",
-                                "valor_principal": "500000.00",
-                                "ente_devedor": "União Federal"
-                            },
-                            "analista": {
-                                "id": "f771be14-e330-4fbd-91d6-ee90ded836dd",
-                                "name": "Dr. Mario Advogado",
-                                "email": "mario@lexpay.com.br"
-                            }
+                            "analista": { "name": "Dr. Michelle" }
                         }
                     ]
                 )
             ]
         ),
         401: OpenApiResponse(description="Não autenticado"),
-        403: OpenApiResponse(description="Sem acesso a função."),
-        404: OpenApiResponse(description="Nada encontrado para o paramêtro fornecido.")
+        403: OpenApiResponse(description="Sem permissão."),
+        404: OpenApiResponse(description="Nada encontrado.")
     }
 )
 class DueListPrioridadeView(generics.ListAPIView):
@@ -179,42 +172,42 @@ class DueListPrioridadeView(generics.ListAPIView):
     queryset = DueDiligence.objects.none() 
 
     def get_queryset(self):
-        raw_prioridade = self.kwargs['prioridade'].lower()
-        
-        mapa_prioridade = {
-            'alta': DueDiligence.PrioridadeType.ALTA,
-            'baixa': DueDiligence.PrioridadeType.BAIXA,
-            'media': DueDiligence.PrioridadeType.MEDIA,  
-            'média': DueDiligence.PrioridadeType.MEDIA,  
-        }
-        
-        prioridade_db = mapa_prioridade.get(raw_prioridade)
-
-        if not prioridade_db:
-            return DueDiligence.objects.none()
-
-        queryset = DueDiligence.objects.select_related('precatorio', 'analista').filter(
-            prioridade=prioridade_db
-        )
-        
         user = self.request.user
-        
-        if user.type_user == TypeUserChoices.ADMINISTRADOR:
-            return queryset
-        
-        filter_map = {
-            TypeUserChoices.ADVOGADO: 'analista',            
-            TypeUserChoices.CEDENTE: 'precatorio__cedente',  
-            TypeUserChoices.BROKER: 'precatorio__broker'     
-        }
-        
-        campo_de_filtro = filter_map.get(user.type_user)
+        queryset = DueDiligence.objects.select_related('precatorio', 'analista').all()
 
-        if campo_de_filtro:
-            return queryset.filter(**{campo_de_filtro: user})
-        return queryset.none()
+        if user.type_user != TypeUserChoices.ADMINISTRADOR:
+            filter_map = {
+                TypeUserChoices.ADVOGADO: 'analista',            
+                TypeUserChoices.CEDENTE: 'precatorio__cedente',  
+                TypeUserChoices.BROKER: 'precatorio__broker'     
+            }
+            
+            campo_de_filtro = filter_map.get(user.type_user)
 
+            if campo_de_filtro:
+                queryset = queryset.filter(**{campo_de_filtro: user})
+            else:
+                return DueDiligence.objects.none()
+            
+        raw_prioridade = self.request.query_params.get('prioridade')
+        
+        if raw_prioridade:
+            raw_prioridade = raw_prioridade.lower()
+            
+            mapa_prioridade = {
+                'alta': DueDiligence.PrioridadeType.ALTA,
+                'baixa': DueDiligence.PrioridadeType.BAIXA,
+                'media': DueDiligence.PrioridadeType.MEDIA,  
+                'média': DueDiligence.PrioridadeType.MEDIA,  
+            }
+            
+            prioridade_db = mapa_prioridade.get(raw_prioridade)
 
+            if prioridade_db:
+                queryset = queryset.filter(prioridade=prioridade_db)
+            else:
+                return DueDiligence.objects.none()
+        return queryset
 
 @extend_schema(
     summary="Edição de Diligencias - Admin",
@@ -271,7 +264,7 @@ class DueUpdateView(generics.UpdateAPIView):
     get=extend_schema(
         summary="Listar Diligências por usuário",
         description="Lista as diligências do usuário que solicita, caso o usuário seja Administrador, consegue ver tudo.",
-        responses={200: DueDiligenceSerializer(many=True)},
+        responses={200: DueDiligenceSerializer(many='True')},
         tags=["Due Diligence"]
     ),
     post=extend_schema(
