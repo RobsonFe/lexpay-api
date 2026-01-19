@@ -57,8 +57,6 @@ class CreateProposalView(generics.CreateAPIView):
 class ProposalListView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProposalSerializer
-
-
     @extend_schema(
         request=None,
         responses={
@@ -113,9 +111,7 @@ class ProposalListView(APIView):
 
 
 class ProposalUpdateView(APIView):
-
     permission_classes = [IsAuthenticated]
-
     @extend_schema(
         tags=["Propostas"],
         request=ProposalSerializer,
@@ -139,9 +135,6 @@ class ProposalUpdateView(APIView):
             )
         ]
     )
-
-
-
     def patch(self, request, pk, *args, **kwargs):
         try:
             proposal = get_object_or_404(Proposal, pk=pk)
@@ -155,7 +148,6 @@ class ProposalUpdateView(APIView):
 
 class ProposalDeleteView(APIView):
     permission_classes = [IsAuthenticated]
-
     @extend_schema(
         tags=["Propostas"],
         request=ProposalSerializer,
