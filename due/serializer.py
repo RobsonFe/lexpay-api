@@ -84,4 +84,25 @@ class DueDiligenceCreateSerializer(serializers.ModelSerializer):
         model= DueDiligence
         fields = ['id', 'precatorio', 'observacoes', 'prioridade', 'analista']
         read_only_fields = ['id','analista']
+
+class AnaliseDocumentoSerializer(serializers.ModelSerializer):
+    precatorio_detalhes = PrecatorioSerializer(source='due_diligence.precatorio', read_only=True)
+    detalhes_usuario = UserLightSerializer(source='analisado_por', read_only=True)
+    due_diligence_detalhes = DueDiligenceSerializer(source='due_diligence', read_only=True)
+
+    class Meta:
+        model = AnaliseDocumento
+        fields = [
+            'id', 
+            'status',
+            'observacoes_analise',
+            'data_analise',
+            'documento',             
+            'due_diligence',      
+            'analisado_por',      
+            'due_diligence_detalhes',
+            'precatorio_detalhes',
+            'detalhes_usuario'
+        ]
+        read_only_fields = fields
     

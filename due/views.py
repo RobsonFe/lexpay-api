@@ -5,9 +5,9 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.permissions import IsAuthenticated
 from django.db import IntegrityError
-from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin)
-from due.models import DueDiligence, TypeUserChoices
-from due.serializer import DueDiligenceSerializer, DueDiligenceCreateSerializer
+from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin, IsAdvogadoOrBroker)
+from due.models import DueDiligence, TypeUserChoices, AnaliseDocumento
+from due.serializer import DueDiligenceSerializer, DueDiligenceCreateSerializer, AnaliseDocumentoSerializer
 from auth.models import TypeUserChoices
 
 from drf_spectacular.utils import (
@@ -259,7 +259,6 @@ class DueUpdateView(generics.UpdateAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
             
-
 @extend_schema_view(
     get=extend_schema(
         summary="Listar Diligências por usuário",
@@ -405,3 +404,22 @@ class DueCreateView(generics.CreateAPIView):
             serializer.save(analista=user)
         except IntegrityError:
             raise ValidationError({'error':'Diligencia já cadastrada no sistema'})
+  
+
+class ListDocumentView(generics.ListAPIView):
+    permission_classes = [IsAdminBrokerOrAdvogado]
+    serializer_class = AnaliseDocumentoSerializer
+    queryset = AnaliseDocumento.objects.all()
+    
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        queryset = AnaliseDocumento.objects.select_related(
+            'due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por', 
+        )
+        if user.is_staff or user.is_superuser:
+            return queryset
+
+        return queryset.filter(analisado_por=user)
+    

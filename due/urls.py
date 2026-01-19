@@ -5,7 +5,8 @@ from .views import (
     DueCreateView, 
     DueUpdateView, 
     DueListView, 
-    DueListPrioridadeView
+    DueListPrioridadeView,
+    ListDocumentView
     )
 
 urlpatterns = [
@@ -15,5 +16,5 @@ urlpatterns = [
     path('atualizar/<uuid:pk>/', DueUpdateView.as_view(), name='due-update'),
     path('listar/ativas/', DueListView.as_view(), name='due-list-active'),
     path('listar/status/', DueListPrioridadeView.as_view(), name='due-list-prioridade'),
-    # path('listar/por-usuario', DueListMyDue.as_view(), name='due-list-for-user')
+    path('listar/documentos/', ListDocumentView.as_view(), name='documento-list')
 ]
