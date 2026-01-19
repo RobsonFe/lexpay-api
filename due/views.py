@@ -1,4 +1,6 @@
 from rest_framework import generics
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
 from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework import status
@@ -683,22 +685,84 @@ class DueCreateView(generics.CreateAPIView):
         404: OpenApiResponse(description="Documento não localizada")
     }
 )
-class AnaliseDocumentoListView(generics.ListAPIView):
+class AnaliseDocumentoListView(APIView):
     permission_classes = [IsAdminBrokerOrAdvogado]
-    serializer_class = AnaliseDocumentoSerializer
-    queryset = AnaliseDocumento.objects.all()
     
-    
-    def get_queryset(self):
-        user = self.request.user
+    def get(self, request):
+        user = request.user
+        queryset = AnaliseDocumento.objects.select_related('due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por', )
         
-        queryset = AnaliseDocumento.objects.select_related(
-            'due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por', 
-        )
-        if user.is_staff or user.is_superuser:
-            return queryset
-
-        return queryset.filter(analisado_por=user)
+        if user.type_user == TypeUserChoices.ADMINISTRADOR:
+            queryset
+        if user.type_user == TypeUserChoices.ADVOGADO or user.type_user == TypeUserChoices.BROKER:
+            queryset.filter(analisado_por=user)
+        
+        serializer = AnaliseDocumentoSerializer(queryset, many=True)
+        return Response({
+            'results':serializer.data
+        },status=status.HTTP_200_OK)
+        
     
 
+@extend_schema(
+    summary="Atualizar/Editar analise de documento",
+    description="Atualizar os documentos já enviados.",
+    tags=["Due Diligence"],
+    methods=["PATCH"],
+    request=AnaliseDocumentoUpdateSerializer,
+    responses={
+        200: OpenApiResponse(
+            description="Documento atualizado.",
+            response=AnaliseDocumentoUpdateSerializer,
+            examples=[
+                OpenApiExample(
+                    name="Atualizado com sucesso",
+                    summary="Documento atualizado com sucesso",
+                    value={
+                        "id": "445eea4b-0cd7-4b29-a765-850d5a0f91d3",
+                        "due_diligence": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
+                        "documento": "c6003d02-bf64-477a-b459-0b41f207ac76",
+                        "status": "APROVADO",
+                        "observacoes_analise": "Documento verificado.",
+                        "data_analise": "19-01-2026 15:33",
+                        "analisado_por": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+                        "detalhes_usuario": {
+                            "id": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+                            "name": "Mario adm",
+                            "email": "email@lexpay.com.br",
+                            "type_user": "user_default",
+                            "avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+                        }
+                    }
+                )
+            ]
+        ),
+        400: OpenApiResponse(description="Dados não validos"),
+        403: OpenApiResponse(description="Sem permissão para alterar este documento"),
+        404: OpenApiResponse(description="Documento não encontrada")
+    }
+)
+
+class AnaliseDocumentoUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAdminOrAdvogado]
+    http_method_names = ['patch']
+    
+    def patch(self, request, pk):
+        user = request.user
+        queryset = get_object_or_404(
+            AnaliseDocumento.objects.select_related('due_diligence__precatorio__advogado'),
+            pk=pk
+        )
+
+        if user.type_user == TypeUserChoices.ADVOGADO:
+            if queryset.analisado_por != user:
+                return Response({
+                    "error":'Somente o dono pode alterar.'
+                },status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = AnaliseDocumentoSerializer(instance=queryset, data=request.data, partial=True, context={"request": request})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response({'result':serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
