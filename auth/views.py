@@ -128,7 +128,7 @@ class RegisterView(APIView):
 	Permite criar usuário junto com endereços em uma única requisição.
 	"""
 	permission_classes = [AllowAny]
-	
+
 	def post(self, request):
 		serializer = UserCreateSerializer(data=request.data)
 		if serializer.is_valid():
@@ -325,7 +325,7 @@ class UserView(APIView):
 	DELETE: Deleta usuário (endereços são deletados em cascade)
 	"""
 	permission_classes = [IsAuthenticated]
-	
+
 	def get(self, request):
 		"""
 		Retorna os dados do usuário autenticado com todos os endereços.
@@ -337,7 +337,8 @@ class UserView(APIView):
 			'result': serializer.data
 		}, status=status.HTTP_200_OK)
 
-	@extend_schema(
+
+@extend_schema(
 		tags=["Usuário"],
 		summary="Atualizar dados do usuário",
 		description=(
@@ -418,13 +419,21 @@ class UserView(APIView):
 			),
 		],
 	)
+class UserUpdateView(APIView):
+	permission_classes = [IsAuthenticated]
+
 	def patch(self, request):
 		"""
 		Atualiza os dados do usuário e seus endereços.
 		Permite atualizar usuário e criar/atualizar/deletar endereços.
 		"""
 		user = request.user
-		serializer = UserUpdateSerializer(user, data=request.data, partial=True, context={'request': request})
+		serializer = UserUpdateSerializer(
+			user,
+			data=request.data,
+			partial=True,
+			context={'request': request}
+			)
 		if serializer.is_valid():
 			serializer.save()
 			user_serializer = UserSerializer(user, context={'request': request})
@@ -450,6 +459,9 @@ class UserView(APIView):
 			401: OpenApiTypes.OBJECT,
 		},
 	)
+class UserDeleteView(APIView):
+	permission_classes = [IsAuthenticated]
+
 	def delete(self, request):
 		"""
 		Deleta o usuário autenticado.
@@ -516,7 +528,7 @@ class AddressView(APIView):
 	POST: Cria um novo endereço para o usuário
 	"""
 	permission_classes = [IsAuthenticated]
-	
+
 	def get(self, request):
 		"""
 		Retorna todos os endereços do usuário autenticado.
@@ -527,7 +539,7 @@ class AddressView(APIView):
 			'message': 'Endereços listados com sucesso',
 			'result': serializer.data
 		}, status=status.HTTP_200_OK)
-	
+
 	@extend_schema(
 		tags=["Endereço"],
 		summary="Criar novo endereço",
@@ -618,7 +630,7 @@ class AddressDetailView(APIView):
 	DELETE: Deleta um endereço específico
 	"""
 	permission_classes = [IsAuthenticated]
-	
+
 	def get_object(self, address_id, user):
 		"""
 		Retorna o endereço se pertencer ao usuário, caso contrário levanta exceção.
@@ -628,7 +640,7 @@ class AddressDetailView(APIView):
 			return address
 		except Address.DoesNotExist:
 			raise NotFound('Endereço não encontrado')
-	
+
 	@extend_schema(
 		tags=["Endereço"],
 		summary="Obter endereço específico",
@@ -693,7 +705,7 @@ class AddressDetailView(APIView):
 			'message': 'Endereço encontrado com sucesso',
 			'result': serializer.data
 		}, status=status.HTTP_200_OK)
-	
+
 	@extend_schema(
 		tags=["Endereço"],
 		summary="Atualizar endereço específico",
@@ -790,7 +802,7 @@ class AddressDetailView(APIView):
 			'message': 'Erro ao atualizar endereço',
 			'errors': serializer.errors
 		}, status=status.HTTP_400_BAD_REQUEST)
-	
+
 	@extend_schema(
 		tags=["Endereço"],
 		summary="Deletar endereço específico",
