@@ -1,32 +1,46 @@
 from rest_framework import permissions
-from auth.models import TypeUserChoices 
+
+from auth.models import TypeUserChoices
+
 
 class IsBrokerOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-        
+
         if request.user.is_staff:
             return True
-        
+
         return request.user.type_user in [
-            TypeUserChoices.BROKER, 
-            TypeUserChoices.ADMINISTRADOR
+            TypeUserChoices.BROKER,
+            TypeUserChoices.ADMINISTRADOR,
         ]
-    
+
+
+class IsAdvogadoOrBroker(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.type_user in [
+            TypeUserChoices.BROKER,
+            TypeUserChoices.ADVOGADO,
+        ]
+
+
 class IsAdminOrAdvogado(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-        
+
         if request.user.is_staff:
             return True
-        
+
         return request.user.type_user in [
-            TypeUserChoices.ADVOGADO, 
-            TypeUserChoices.ADMINISTRADOR
+            TypeUserChoices.ADVOGADO,
+            TypeUserChoices.ADMINISTRADOR,
         ]
-    
+
+
 class IsAdminBrokerOrAdvogado(permissions.BasePermission):
     def has_permission(self, request, view):
         user = request.user
@@ -35,10 +49,11 @@ class IsAdminBrokerOrAdvogado(permissions.BasePermission):
         if user.is_staff:
             return True
         return user.type_user in [
-            TypeUserChoices.ADVOGADO, 
+            TypeUserChoices.ADVOGADO,
             TypeUserChoices.ADMINISTRADOR,
-            TypeUserChoices.BROKER
+            TypeUserChoices.BROKER,
         ]
+
 
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):

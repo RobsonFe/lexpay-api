@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.permissions import IsAuthenticated
 from django.db import IntegrityError
-from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin, IsAdvogadoOrBroker)
+from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin)
 from due.models import DueDiligence, TypeUserChoices, AnaliseDocumento
 from due.serializer import DueDiligenceSerializer, DueDiligenceCreateSerializer, AnaliseDocumentoSerializer, AnaliseDocumentoUpdateSerializer
 from auth.models import TypeUserChoices
@@ -702,7 +702,6 @@ class AnaliseDocumentoListView(APIView):
             'results':serializer.data
         },status=status.HTTP_200_OK)
         
-    
 
 @extend_schema(
     summary="Atualizar/Editar analise de documento",
@@ -742,11 +741,9 @@ class AnaliseDocumentoListView(APIView):
         404: OpenApiResponse(description="Documento não encontrada")
     }
 )
-
-class AnaliseDocumentoUpdateView(generics.UpdateAPIView):
+class AnaliseDocumentoUpdateView(APIView):
     permission_classes = [IsAdminOrAdvogado]
-    http_method_names = ['patch']
-    
+
     def patch(self, request, pk):
         user = request.user
         queryset = get_object_or_404(
@@ -765,4 +762,3 @@ class AnaliseDocumentoUpdateView(generics.UpdateAPIView):
             serializer.save()
             return Response({'result':serializer.data}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
