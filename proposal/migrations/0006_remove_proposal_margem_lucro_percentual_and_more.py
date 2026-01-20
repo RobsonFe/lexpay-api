@@ -8,22 +8,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("proposal", "0005_rename_update_at_proposal_updated_at"),
+        ('proposal', '0005_rename_update_at_proposal_updated_at'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="proposal",
-            name="margem_lucro_percentual",
+            model_name='proposal',
+            name='margem_lucro_percentual',
         ),
         migrations.AlterField(
-            model_name="proposal",
-            name="proponente",
-            field=models.ForeignKey(
-                limit_choices_to={"type_user": "Broker"},
-                on_delete=django.db.models.deletion.PROTECT,
-                to=settings.AUTH_USER_MODEL,
-            ),
+            model_name='proposal',
+            name='proponente',
+            field=models.ForeignKey(limit_choices_to={'type_user': 'Broker'}, on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL),
         ),
     ]

@@ -8,18 +8,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("proposal", "0006_remove_proposal_margem_lucro_percentual_and_more"),
+        ('proposal', '0006_remove_proposal_margem_lucro_percentual_and_more'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="proposalhistory",
-            name="alterado_por",
-            field=models.ForeignKey(
-                null=True,
-                on_delete=django.db.models.deletion.PROTECT,
-                to=settings.AUTH_USER_MODEL,
-            ),
+            model_name='proposalhistory',
+            name='alterado_por',
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL),
         ),
     ]

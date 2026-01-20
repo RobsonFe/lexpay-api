@@ -6,22 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("proposal", "0007_alter_proposalhistory_alterado_por"),
+        ('proposal', '0007_alter_proposalhistory_alterado_por'),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="proposal",
-            name="valor_liquido_cedente",
-            field=models.DecimalField(
-                blank=True, decimal_places=2, max_digits=18, null=True
-            ),
+            model_name='proposal',
+            name='valor_liquido_cedente',
+            field=models.DecimalField(blank=True, decimal_places=2, max_digits=18, null=True),
         ),
         migrations.AlterField(
-            model_name="proposal",
-            name="valor_liquido_proponente",
-            field=models.DecimalField(
-                blank=True, decimal_places=2, max_digits=18, null=True
-            ),
+            model_name='proposal',
+            name='valor_liquido_proponente',
+            field=models.DecimalField(blank=True, decimal_places=2, max_digits=18, null=True),
         ),
     ]
