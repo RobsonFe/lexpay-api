@@ -6,14 +6,14 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from proposal.permissions import IsAdminOrBroker, IsBrokerOrCedenteOrAdmin
 from proposal.models import Proposal
 from proposal.serializer import ProposalSerializer
 from proposal.services import ProposalService
 
 
 class CreateProposalView(generics.CreateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsBrokerOrCedenteOrAdmin]
     queryset = Proposal.objects.all()
     serializer_class = ProposalSerializer
 
@@ -58,7 +58,7 @@ class CreateProposalView(generics.CreateAPIView):
 
 
 class ProposalListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsBrokerOrCedenteOrAdmin]
     serializer_class = ProposalSerializer
 
     @extend_schema(
@@ -108,7 +108,7 @@ class ProposalListView(APIView):
 
 
 class ProposalUpdateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrBroker]
 
     @extend_schema(
         tags=["Propostas"],
@@ -148,7 +148,7 @@ class ProposalUpdateView(APIView):
 
 
 class ProposalDeleteView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsBrokerOrCedenteOrAdmin]
 
     @extend_schema(
         tags=["Propostas"],
@@ -168,7 +168,7 @@ class ProposalDeleteView(APIView):
 
 
 class ProposalAcceptView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrBroker]
 
     @extend_schema(
         tags=["Propostas"],
