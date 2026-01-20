@@ -8,19 +8,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('proposal', '0003_alter_proposal_precatorio_alter_proposal_proponente'),
+        ("proposal", "0003_alter_proposal_precatorio_alter_proposal_proponente"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='proposalhistory',
-            name='alterado_por',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL),
+            model_name="proposalhistory",
+            name="alterado_por",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL
+            ),
         ),
         migrations.AlterField(
-            model_name='proposalhistory',
-            name='proposal',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='proposal.proposal'),
+            model_name="proposalhistory",
+            name="proposal",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="proposal.proposal"
+            ),
         ),
     ]
