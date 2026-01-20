@@ -1,17 +1,14 @@
-from proposal.serializer import ProposalSerializer, ProposalHistorySerializer
+from proposal.serializer import ProposalSerializer
 from rest_framework.permissions import  IsAuthenticated
 from rest_framework.response import Response
 from drf_spectacular.utils import    extend_schema, OpenApiExample
 from rest_framework.views import APIView
 from rest_framework import status, generics
 from proposal.models import Proposal
-from django.shortcuts import get_object_or_404 
+from django.shortcuts import get_object_or_404
 from django.db import transaction
-from django.utils import timezone
 from proposal.services import ProposalService
 from rest_framework.exceptions import ValidationError, PermissionDenied
-from oficio.models import StatusPrecatorioChoices 
-from django.db import transaction
 
 class CreateProposalView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -40,21 +37,15 @@ class CreateProposalView(generics.CreateAPIView):
         ]
     )
     def perform_create(self, serializer):
-      
         user = self.request.user
-
-        if user.type_user not in ['Broker', 'Admin']: 
+        if user.type_user not in ['Broker', 'Admin']:
             raise PermissionDenied("Apenas usuários do tipo 'Broker' podem criar propostas de compra.")
-
         try:
             with transaction.atomic():
                 proposal = serializer.save(proponente=user)
-
                 proposal._current_user = user
                 proposal.status = "ENVIADA"
-                
                 proposal.save()
-
                 return Response({
                     "result": serializer.data
                 }, status=status.HTTP_201_CREATED)
@@ -62,14 +53,12 @@ class CreateProposalView(generics.CreateAPIView):
             return Response({
                 "error": [str(e)]
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
 class ProposalListView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProposalSerializer
-    
-
     @extend_schema(
-        request=None, 
+        request=None,
         responses={
             200: 'List Of Proposals',
             400: "Bad Request"
@@ -102,37 +91,27 @@ class ProposalListView(APIView):
             )
         ]
     )
-        
-       
     def get(self, request):
         user = self.request.user
-        
         try:
             if user.type_user == 'Administrador':
                 queryset = Proposal.objects.all()
-            
             elif user.type_user == 'Broker':
                 queryset = Proposal.objects.filter(proponente=user)
-            
             elif user.type_user == 'Cedente':
                 queryset = Proposal.objects.filter(precatorio__cedente=user)
-
-
             serializer = self.serializer_class(queryset, many=True)
             return Response({'results': serializer.data}, status=status.HTTP_200_OK)
-        
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
-    
-  
-        
-        
-        
+
+
+
+
+
+
 class ProposalUpdateView(APIView):
-   
     permission_classes = [IsAuthenticated]
-    
     @extend_schema(
         tags=["Propostas"],
         request=ProposalSerializer,
@@ -145,44 +124,30 @@ class ProposalUpdateView(APIView):
             OpenApiExample(
                 'Exemplo de Requisição (Brokers e admins)',
                 value={
-                    
-                        
-                            "valor_proposto": "100000.00",
-                            "taxa_desconto": "20.00",
-                            "taxa_juros_anual": "12.50",
-                            "prazo_pagamento_meses": 1,
-                            "data_vencimento": "31-12-2026",
-                            "observacoes": "Atualização de proposta",
-                            "status": "ENVIADA",
-                            
-                    
+                        "valor_proposto": "100000.00",
+                        "taxa_desconto": "20.00",
+                        "taxa_juros_anual": "12.50",
+                        "prazo_pagamento_meses": 1,
+                        "data_vencimento": "31-12-2026",
+                        "observacoes": "Atualização de proposta",
+                        "status": "ENVIADA",
                 }
             )
         ]
     )
-        
-    
-    
     def patch(self, request, pk, *args, **kwargs):
         try:
             proposal = get_object_or_404(Proposal, pk=pk)
             serializer = ProposalSerializer(proposal, data=request.data, partial=True)
-          
             serializer.is_valid(raise_exception=True)
-            
-            
             serializer.save()
-            
-            
             return Response({'message': 'Proposta atualizada com sucesso!', 'data': serializer.data}, status=status.HTTP_200_OK)
-       
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-        
+
+
 class ProposalDeleteView(APIView):
     permission_classes = [IsAuthenticated]
-
     @extend_schema(
         tags=["Propostas"],
         request=ProposalSerializer,
@@ -199,7 +164,7 @@ class ProposalDeleteView(APIView):
             return Response({'message': 'Proposta deletada com sucesso!'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
 class ProposalAcceptView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -229,8 +194,8 @@ class ProposalAcceptView(APIView):
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": f"Erro crítico: {str(e)}"}, status=500)
-        
-        
+
+
 class InvestorOpportunitiesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -239,9 +204,9 @@ class InvestorOpportunitiesView(APIView):
         description="Lista oportunidades de investimento ordenadas por inteligência de rentabilidade (Score)."
     )
     def get(self, request):
-      
+
         proposals = Proposal.objects.filter(status='ENVIADA').com_score_atratividade()
-        
+
         serializer = ProposalSerializer(proposals, many=True)
         return Response({
             "count": proposals.count(),
