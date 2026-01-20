@@ -13,7 +13,7 @@ from proposal.services import ProposalService
 
 
 class CreateProposalView(generics.CreateAPIView):
-    permission_classes = [IsAuthenticated, IsBrokerOrCedenteOrAdmin]
+    permission_classes = [IsBrokerOrCedenteOrAdmin]
     queryset = Proposal.objects.all()
     serializer_class = ProposalSerializer
 
@@ -58,7 +58,7 @@ class CreateProposalView(generics.CreateAPIView):
 
 
 class ProposalListView(APIView):
-    permission_classes = [IsAuthenticated, IsBrokerOrCedenteOrAdmin]
+    permission_classes = [IsBrokerOrCedenteOrAdmin]
     serializer_class = ProposalSerializer
 
     @extend_schema(
@@ -108,7 +108,7 @@ class ProposalListView(APIView):
 
 
 class ProposalUpdateView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminOrBroker]
+    permission_classes = [IsAdminOrBroker]
 
     @extend_schema(
         tags=["Propostas"],
@@ -148,7 +148,7 @@ class ProposalUpdateView(APIView):
 
 
 class ProposalDeleteView(APIView):
-    permission_classes = [IsAuthenticated, IsBrokerOrCedenteOrAdmin]
+    permission_classes = [IsBrokerOrCedenteOrAdmin]
 
     @extend_schema(
         tags=["Propostas"],
@@ -168,7 +168,7 @@ class ProposalDeleteView(APIView):
 
 
 class ProposalAcceptView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminOrBroker]
+    permission_classes = [IsAdminOrBroker]
 
     @extend_schema(
         tags=["Propostas"],
