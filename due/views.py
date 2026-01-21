@@ -797,7 +797,7 @@ class AnaliseDocumentoListView(APIView):
     }
     
 )
-class AnaliseDocumentoUpdateView(generics.UpdateAPIView):
+class AnaliseDocumentoUpdateView(APIView):
     permission_classes = [IsAdminOrAdvogado]
     serializer_class = AnaliseDocumentoUpdateSerializer
     http_method_names = ['patch']
@@ -808,9 +808,9 @@ class AnaliseDocumentoUpdateView(generics.UpdateAPIView):
             AnaliseDocumento.objects.select_related('due_diligence__precatorio__advogado'),
             pk=pk
         )
-
         if user.type_user == TypeUserChoices.ADVOGADO:
-            if queryset.analisado_por != user:
+            advogado_oficio = queryset.due_diligence.precatorio.advogado
+            if advogado_oficio != user:
                 return Response({
                     "error":'Somente o dono pode alterar.'
                 },status=status.HTTP_403_FORBIDDEN)
