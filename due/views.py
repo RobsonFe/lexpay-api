@@ -1,4 +1,6 @@
 from rest_framework import generics
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
 from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework import status
@@ -683,22 +685,19 @@ class DueCreateView(generics.CreateAPIView):
         404: OpenApiResponse(description="Documento não localizada")
     }
 )
-class AnaliseDocumentoListView(generics.ListAPIView):
+class AnaliseDocumentoListView(APIView):
     permission_classes = [IsAdminBrokerOrAdvogado]
-    serializer_class = AnaliseDocumentoSerializer
-    queryset = AnaliseDocumento.objects.all()
     
-    
-    def get_queryset(self):
-        user = self.request.user
+    def get(self, request):
+        user = request.user
+        queryset = AnaliseDocumento.objects.select_related('due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por', )
         
-        queryset = AnaliseDocumento.objects.select_related(
-            'due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por', 
-        )
-        if user.is_staff or user.is_superuser:
-            return queryset
-
-        return queryset.filter(analisado_por=user)
-    
-
-    
+        if user.type_user == TypeUserChoices.ADMINISTRADOR:
+            queryset
+        if user.type_user == TypeUserChoices.ADVOGADO or user.type_user == TypeUserChoices.BROKER:
+            queryset.filter(analisado_por=user)
+        
+        serializer = AnaliseDocumentoSerializer(queryset, many=True)
+        return Response({
+            'results':serializer.data
+        },status=status.HTTP_200_OK)
