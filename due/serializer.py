@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import DueDiligence, AnaliseDocumento
 from oficio.serializer import UserLightSerializer, PrecatorioSerializer
 
@@ -77,7 +78,6 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
             data['documento_aprovado'] = True
         
         return data
-    
 
 class DueDiligenceCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -105,4 +105,38 @@ class AnaliseDocumentoSerializer(serializers.ModelSerializer):
             'detalhes_usuario'
         ]
         read_only_fields = fields
+
+class AnaliseDocumentoUpdateSerializer(serializers.ModelSerializer):
     
+    detalhes_usuario = UserLightSerializer(source='analisado_por', read_only=True)
+    class Meta:
+        model = AnaliseDocumento
+        fields = [
+            'id', 
+            'due_diligence',          
+            'documento',       
+            'status',
+            'observacoes_analise',
+            'data_analise',
+            'analisado_por',          
+            'detalhes_usuario',          
+        ]
+        read_only_fields = [
+            'id', 
+            'due_diligence',
+            'detalhes_usuario',
+            'precatorio_detalhes'
+        ]
+        
+        
+    def update(self, instance, validated_data):
+        user = self.context['request'].user
+        instance.data_analise = timezone.now()
+        instance.analisado_por = user
+        
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        
+        instance.save()
+        
+        return instance

@@ -18,7 +18,8 @@ from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiResponse,
     OpenApiParameter,
-    OpenApiTypes
+    OpenApiTypes,
+    OpenApiRequest
 )
 
 @extend_schema_view(
@@ -701,3 +702,122 @@ class AnaliseDocumentoListView(APIView):
         return Response({
             'results':serializer.data
         },status=status.HTTP_200_OK)
+        
+    
+
+# @extend_schema(
+#     summary="Atualizar/Editar analise de documento",
+#     description="Atualizar os documentos já enviados.",
+#     tags=["Due Diligence"],
+#     methods=["PATCH"],
+#     request=AnaliseDocumentoUpdateSerializer,
+#     responses={
+#         200: OpenApiResponse(
+#             description="Documento atualizado.",
+#             response=AnaliseDocumentoUpdateSerializer,
+#             examples=[
+#                 OpenApiExample(
+#                     name="Atualizado com sucesso",
+#                     summary="Documento atualizado com sucesso",
+#                     value={
+#                         "id": "445eea4b-0cd7-4b29-a765-850d5a0f91d3",
+#                         "due_diligence": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
+#                         "documento": "c6003d02-bf64-477a-b459-0b41f207ac76",
+#                         "status": "APROVADO",
+#                         "observacoes_analise": "Documento verificado.",
+#                         "data_analise": "19-01-2026 15:33",
+#                         "analisado_por": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+#                         "detalhes_usuario": {
+#                             "id": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+#                             "name": "Mario adm",
+#                             "email": "email@lexpay.com.br",
+#                             "type_user": "user_default",
+#                             "avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+#                         }
+#                     }
+#                 )
+#             ]
+#         ),
+#         400: OpenApiResponse(description="Dados não validos"),
+#         403: OpenApiResponse(description="Sem permissão para alterar este documento"),
+#         404: OpenApiResponse(description="Documento não encontrada")
+#     }
+# )
+
+@extend_schema(
+    summary="Ataualização de analise de documentos.",
+    description="Atualizar os dados da analise de documento, podendo atualizar os dados de forma geral ou parcial.",
+    tags=["Due Diligence"],
+    request=OpenApiRequest(
+        request=AnaliseDocumentoUpdateSerializer,
+        examples=[
+            OpenApiExample(
+                name="Envio da payload",
+                summary="Campos que serão enviados",
+                description="Dados que serão enviados par atualizar a analise",
+                value={
+                    "status": "APROVADO",
+                    "observacoes_analise": "Documento aprovado na diligencia.",
+                    "motivo_repactuacao": ""
+                }
+            )
+        ]
+    ),
+    responses={
+        200: OpenApiResponse(
+            description="Sucesso na requisição.",
+            response=AnaliseDocumentoSerializer,
+            examples=[
+                OpenApiExample(
+                    name="Sucesso na execução da requisição",
+                    summary="Retorno da execução",
+                    value={
+                        "result": {
+                                "id": "445eea4b-0cd7-4b29-a765-850d5a0f91d3",
+                        "due_diligence": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
+                        "documento": "c6003d02-bf64-477a-b459-0b41f207ac76",
+                        "status": "APROVADO",
+                        "observacoes_analise": "Documento aprovado na diligencia.",
+                        "data_analise": "19-01-2026 15:33",
+                        "analisado_por": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+                            "detalhes_usuario": {
+                                "id": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+                                "name": "Mario adm",
+                                "email": "email@lexpay.com.br",
+                                "type_user": "user_default",
+                                "avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+                            }
+                        }
+                    }
+                )
+            ]
+        ),
+        400:OpenApiResponse("Verifique os campos e tente novamente."),
+        403:OpenApiResponse(description="Somento o dono desse ativo pode realizar edições.")
+    }
+    
+)
+class AnaliseDocumentoUpdateView(APIView):
+    permission_classes = [IsAdminOrAdvogado]
+    serializer_class = AnaliseDocumentoUpdateSerializer
+    http_method_names = ['patch']
+
+    def patch(self, request, pk):
+        user = request.user
+        queryset = get_object_or_404(
+            AnaliseDocumento.objects.select_related('due_diligence__precatorio__advogado'),
+            pk=pk
+        )
+        if user.type_user == TypeUserChoices.ADVOGADO:
+            advogado_oficio = queryset.due_diligence.precatorio.advogado
+            if advogado_oficio != user:
+                return Response({
+                    "error":'Somente o dono pode alterar.'
+                },status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = AnaliseDocumentoSerializer(instance=queryset, data=request.data, partial=True, context={"request": request})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response({'result':serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
