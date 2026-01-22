@@ -3,7 +3,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework.exceptions import NotFound
 from auth.models import User, Address
 from auth.serializer import (
@@ -128,7 +128,7 @@ class RegisterView(APIView):
 	Permite criar usuário junto com endereços em uma única requisição.
 	"""
 	permission_classes = [AllowAny]
-	
+
 	def post(self, request):
 		serializer = UserCreateSerializer(data=request.data)
 		if serializer.is_valid():
@@ -267,62 +267,69 @@ class LogoutView(APIView):
 
 
 @extend_schema(
-    tags=["Usuário"],
-    summary="Obter dados do usuário autenticado",
-    description=(
-        "Retorna os dados completos do usuário autenticado incluindo todos os endereços associados. "
-        "Requer autenticação via Bearer token no header Authorization."
-    ),
-    responses={
-        200: OpenApiResponse(
-            response=UserSerializer,
-            description="Dados do usuário",
-            examples=[
-                OpenApiExample(
-                    name="Sucesso",
-                    summary="Resposta com dados do usuário",
-                    value={
-                        "message": "Usuário autenticado com sucesso",
-                        "result": {
-                            "id": "550e8400-e29b-41d4-a716-446655440000",
-                            "email": "usuario@example.com",
-                            "username": "usuario123",
-                            "name": "João Silva",
-                            "cpf": "12345678901",
-                            "phone": "11987654321",
-                            "avatar": "http://127.0.0.1:8000/media/avatars/default.png",
-                            "type_user": "Cedente",
-                            "is_active": True,
-                            "is_staff": False,
-                            "created_at": "2025-12-18T12:00:00Z",
-                            "updated_at": "2025-12-18T12:00:00Z",
-                            "addresses": [
-                                {
-                                    "id": "660e8400-e29b-41d4-a716-446655440001",
-                                    "address": "Rua Exemplo",
-                                    "number": "123",
-                                    "complement": "Apto 45",
-                                    "city": "São Paulo",
-                                    "state": "SP",
-                                    "zip_code": "01234567",
-                                    "created_at": "2025-12-18T12:00:00Z",
-                                    "updated_at": "2025-12-18T12:00:00Z",
-                                }
-                            ],
-                        },
-                    },
-                ),
-            ],
-        ),
-        401: OpenApiTypes.OBJECT,
-    },
-)
+		tags=["Usuário"],
+		summary="Obter dados do usuário autenticado",
+		description=(
+			"Retorna os dados completos do usuário autenticado incluindo todos os endereços associados. "
+			"Requer autenticação via Bearer token no header Authorization."
+		),
+		responses={
+			200: OpenApiResponse(
+				response=UserSerializer,
+				description="Dados do usuário",
+				examples=[
+					OpenApiExample(
+						name="Sucesso",
+						summary="Resposta com dados do usuário",
+						value={
+							"message": "Usuário autenticado com sucesso",
+							"result": {
+								"id": "550e8400-e29b-41d4-a716-446655440000",
+								"email": "usuario@example.com",
+								"username": "usuario123",
+								"name": "João Silva",
+								"cpf": "12345678901",
+								"phone": "11987654321",
+								"avatar": "http://127.0.0.1:8000/media/avatars/default.png",
+								"type_user": "Cedente",
+								"is_active": True,
+								"is_staff": False,
+								"created_at": "2025-12-18T12:00:00Z",
+								"updated_at": "2025-12-18T12:00:00Z",
+								"addresses": [
+									{
+										"id": "660e8400-e29b-41d4-a716-446655440001",
+										"address": "Rua Exemplo",
+										"number": "123",
+										"complement": "Apto 45",
+										"city": "São Paulo",
+										"state": "SP",
+										"zip_code": "01234567",
+										"created_at": "2025-12-18T12:00:00Z",
+										"updated_at": "2025-12-18T12:00:00Z",
+									}
+								],
+							},
+						},
+					),
+				],
+			),
+			401: OpenApiResponse(
+				description="Token inválido",
+				examples=[
+					OpenApiExample(
+						name="Token inválido",
+						value={"message": "Token inválido"},
+					),
+				],
+			),
+		},
+	)
 class UserView(APIView):
 	"""
-	View para CRUD completo do usuário autenticado.
-	GET: Retorna dados do usuário com endereços
-	PATCH: Atualiza usuário e endereços
-	DELETE: Deleta usuário (endereços são deletados em cascade)
+	View para obter os dados do usuário autenticado.
+	GET: Retorna os dados do usuário autenticado com todos os endereços.
+	Requer autenticação via Bearer token no header Authorization.
 	"""
 	permission_classes = [IsAuthenticated]
 	
@@ -337,9 +344,10 @@ class UserView(APIView):
 			'result': serializer.data
 		}, status=status.HTTP_200_OK)
 
-	@extend_schema(
+
+@extend_schema(
 		tags=["Usuário"],
-		summary="Atualizar dados do usuário",
+		summary="Atualiza os dados do usuário",
 		description=(
 			"Atualiza os dados do usuário autenticado e seus endereços. "
 			"Permite atualizar campos do usuário (incluindo type_user) e gerenciar endereços: criar novos, atualizar existentes (enviando o id) ou manter os existentes. "
@@ -418,13 +426,21 @@ class UserView(APIView):
 			),
 		],
 	)
+class UserUpdateView(APIView):
+	permission_classes = [IsAuthenticated]
+
 	def patch(self, request):
 		"""
 		Atualiza os dados do usuário e seus endereços.
 		Permite atualizar usuário e criar/atualizar/deletar endereços.
 		"""
 		user = request.user
-		serializer = UserUpdateSerializer(user, data=request.data, partial=True, context={'request': request})
+		serializer = UserUpdateSerializer(
+			user,
+			data=request.data,
+			partial=True,
+			context={'request': request}
+			)
 		if serializer.is_valid():
 			serializer.save()
 			user_serializer = UserSerializer(user, context={'request': request})
@@ -437,19 +453,23 @@ class UserView(APIView):
 			'errors': serializer.errors
 		}, status=status.HTTP_400_BAD_REQUEST)
 
-	@extend_schema(
-		tags=["Usuário"],
-		summary="Deletar usuário",
-		description=(
-			"Deleta permanentemente o usuário autenticado e todos os seus endereços associados (CASCADE). "
-			"Esta operação é irreversível. Requer autenticação via Bearer token no header Authorization."
-		),
-		request=None,
-		responses={
-			204: OpenApiResponse(description="Usuário deletado com sucesso"),
-			401: OpenApiTypes.OBJECT,
-		},
-	)
+
+@extend_schema(
+	tags=["Usuário"],
+	summary="Deletar usuário o usuário do sistema de performa permanentemente",
+	description=(
+		"Deleta permanentemente o usuário autenticado e todos os seus endereços associados (CASCADE). "
+		"Esta operação é irreversível. Requer autenticação via Bearer token no header Authorization."
+	),
+	request=None,
+	responses={
+		204: OpenApiResponse(description="Usuário deletado com sucesso"),
+		401: OpenApiTypes.OBJECT,
+	},
+)
+class UserDeleteView(APIView):
+	permission_classes = [IsAuthenticated]
+
 	def delete(self, request):
 		"""
 		Deleta o usuário autenticado.
@@ -509,95 +529,107 @@ class UserView(APIView):
         401: OpenApiTypes.OBJECT,
     },
 )
-class AddressView(APIView):
+class AddressListView(generics.ListAPIView):
 	"""
-	View para CRUD completo de endereços do usuário autenticado.
+	View para listar endereços do usuário autenticado.
 	GET: Lista todos os endereços do usuário
-	POST: Cria um novo endereço para o usuário
 	"""
 	permission_classes = [IsAuthenticated]
-	
-	def get(self, request):
+	serializer_class = AddressSerializer
+
+	def get_queryset(self):
+		return Address.objects.filter(user=self.request.user)
+
+	def list(self, request, *args, **kwargs):
 		"""
 		Retorna todos os endereços do usuário autenticado.
 		"""
-		addresses = Address.objects.filter(user=request.user)
-		serializer = AddressSerializer(addresses, many=True)
+		addresses = self.get_queryset()
+		serializer = self.get_serializer(addresses, many=True)
 		return Response({
 			'message': 'Endereços listados com sucesso',
 			'result': serializer.data
 		}, status=status.HTTP_200_OK)
-	
-	@extend_schema(
-		tags=["Endereço"],
-		summary="Criar novo endereço",
-		description=(
-			"Cria um novo endereço para o usuário autenticado. "
-			"O endereço será automaticamente associado ao usuário que faz a requisição. "
-			"Requer autenticação via Bearer token no header Authorization."
+
+
+@extend_schema(
+	tags=["Endereço"],
+	summary="Criar novo endereço",
+	description=(
+		"Cria um novo endereço para o usuário autenticado. "
+		"O endereço será automaticamente associado ao usuário que faz a requisição. "
+		"Requer autenticação via Bearer token no header Authorization."
+	),
+	request=AddressSerializer,
+	responses={
+		201: OpenApiResponse(
+			response=AddressSerializer,
+			description="Endereço criado com sucesso",
+			examples=[
+				OpenApiExample(
+					name="Sucesso",
+					summary="Resposta com endereço criado",
+					value={
+						"message": "Endereço criado com sucesso",
+						"result": {
+							"id": "660e8400-e29b-41d4-a716-446655440001",
+							"address": "Rua Exemplo",
+							"number": "123",
+							"complement": "Apto 45",
+							"city": "São Paulo",
+							"state": "SP",
+							"zip_code": "01234567",
+							"created_at": "2025-12-18T12:00:00Z",
+							"updated_at": "2025-12-18T12:00:00Z",
+						},
+					},
+				),
+			],
 		),
-		request=AddressSerializer,
-		responses={
-			201: OpenApiResponse(
-				response=AddressSerializer,
-				description="Endereço criado com sucesso",
-				examples=[
-					OpenApiExample(
-						name="Sucesso",
-						summary="Resposta com endereço criado",
-						value={
-							"message": "Endereço criado com sucesso",
-							"result": {
-								"id": "660e8400-e29b-41d4-a716-446655440001",
-								"address": "Rua Exemplo",
-								"number": "123",
-								"complement": "Apto 45",
-								"city": "São Paulo",
-								"state": "SP",
-								"zip_code": "01234567",
-								"created_at": "2025-12-18T12:00:00Z",
-								"updated_at": "2025-12-18T12:00:00Z",
-							},
+		400: OpenApiResponse(
+			description="Erro de validação",
+			examples=[
+				OpenApiExample(
+					name="Erro de validação",
+					value={
+						"message": "Erro ao criar endereço",
+						"errors": {
+							"state": ["Ensure this field has no more than 2 characters."],
 						},
-					),
-				],
-			),
-			400: OpenApiResponse(
-				description="Erro de validação",
-				examples=[
-					OpenApiExample(
-						name="Erro de validação",
-						value={
-							"message": "Erro ao criar endereço",
-							"errors": {
-								"state": ["Ensure this field has no more than 2 characters."],
-							},
-						},
-					),
-				],
-			),
-			401: OpenApiTypes.OBJECT,
-		},
-		examples=[
-			OpenApiExample(
-				"Exemplo de request",
-				value={
-					"address": "Rua Exemplo",
-					"number": "123",
-					"complement": "Apto 45",
-					"city": "São Paulo",
-					"state": "SP",
-					"zip_code": "01234567",
-				},
-				request_only=True,
-			),
-		],
-	)
-	def post(self, request):
+					},
+				),
+			],
+		),
+		401: OpenApiTypes.OBJECT,
+	},
+	examples=[
+		OpenApiExample(
+			"Exemplo de request",
+			value={
+				"address": "Rua Exemplo",
+				"number": "123",
+				"complement": "Apto 45",
+				"city": "São Paulo",
+				"state": "SP",
+				"zip_code": "01234567",
+			},
+			request_only=True,
+		),
+	],
+)
+class AddressCreateView(generics.CreateAPIView):
+	"""
+	View para criar endereço do usuário autenticado.
+	POST: Cria um novo endereço para o usuário
+	"""
+	permission_classes = [IsAuthenticated]
+	serializer_class = AddressSerializer
+
+	def create(self, request, *args, **kwargs):
 		"""
 		Cria um novo endereço para o usuário autenticado.
 		"""
-		serializer = AddressSerializer(data=request.data)
+		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			address = serializer.save(user=request.user)
 			return Response({
@@ -610,90 +642,19 @@ class AddressView(APIView):
 		}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AddressDetailView(APIView):
+class AddressUpdateView(generics.UpdateAPIView):
 	"""
-	View para operações específicas em um endereço.
-	GET: Retorna um endereço específico
+	View para atualizar um endereço específico do usuário autenticado.
 	PATCH: Atualiza um endereço específico
-	DELETE: Deleta um endereço específico
 	"""
 	permission_classes = [IsAuthenticated]
-	
-	def get_object(self, address_id, user):
-		"""
-		Retorna o endereço se pertencer ao usuário, caso contrário levanta exceção.
-		"""
-		try:
-			address = Address.objects.get(id=address_id, user=user)
-			return address
-		except Address.DoesNotExist:
-			raise NotFound('Endereço não encontrado')
-	
-	@extend_schema(
-		tags=["Endereço"],
-		summary="Obter endereço específico",
-		description=(
-			"Retorna os dados de um endereço específico do usuário autenticado. "
-			"O endereço_id na URL deve ser o UUID do endereço. "
-			"Valida que o endereço pertence ao usuário autenticado. "
-			"Requer autenticação via Bearer token no header Authorization."
-		),
-		parameters=[
-			OpenApiParameter(
-				"address_id",
-				OpenApiTypes.UUID,
-				OpenApiParameter.PATH,
-				description="UUID do endereço",
-			),
-		],
-		responses={
-			200: OpenApiResponse(
-				response=AddressSerializer,
-				description="Endereço encontrado",
-				examples=[
-					OpenApiExample(
-						name="Sucesso",
-						summary="Resposta com endereço",
-						value={
-							"message": "Endereço encontrado com sucesso",
-							"result": {
-								"id": "660e8400-e29b-41d4-a716-446655440001",
-								"address": "Rua Exemplo",
-								"number": "123",
-								"complement": "Apto 45",
-								"city": "São Paulo",
-								"state": "SP",
-								"zip_code": "01234567",
-								"created_at": "2025-12-18T12:00:00Z",
-								"updated_at": "2025-12-18T12:00:00Z",
-							},
-						},
-					),
-				],
-			),
-			404: OpenApiResponse(
-				description="Endereço não encontrado",
-				examples=[
-					OpenApiExample(
-						name="Não encontrado",
-						value={"detail": "Endereço não encontrado"},
-					),
-				],
-			),
-			401: OpenApiTypes.OBJECT,
-		},
-	)
-	def get(self, request, address_id):
-		"""
-		Retorna um endereço específico do usuário autenticado.
-		"""
-		address = self.get_object(address_id, request.user)
-		serializer = AddressSerializer(address)
-		return Response({
-			'message': 'Endereço encontrado com sucesso',
-			'result': serializer.data
-		}, status=status.HTTP_200_OK)
-	
+	serializer_class = AddressSerializer
+	http_method_names = ['patch']
+	lookup_url_kwarg = 'address_id'
+
+	def get_queryset(self):
+		return Address.objects.filter(user=self.request.user)
+
 	@extend_schema(
 		tags=["Endereço"],
 		summary="Atualizar endereço específico",
@@ -774,12 +735,12 @@ class AddressDetailView(APIView):
 			),
 		],
 	)
-	def patch(self, request, address_id):
+	def patch(self, request, *args, **kwargs):
 		"""
 		Atualiza um endereço específico do usuário autenticado.
 		"""
-		address = self.get_object(address_id, request.user)
-		serializer = AddressSerializer(address, data=request.data, partial=True)
+		address = self.get_object()
+		serializer = self.get_serializer(address, data=request.data, partial=True)
 		if serializer.is_valid():
 			serializer.save()
 			return Response({
@@ -790,7 +751,20 @@ class AddressDetailView(APIView):
 			'message': 'Erro ao atualizar endereço',
 			'errors': serializer.errors
 		}, status=status.HTTP_400_BAD_REQUEST)
-	
+
+
+class AddressDeleteView(generics.DestroyAPIView):
+	"""
+	View para deletar um endereço específico do usuário autenticado.
+	DELETE: Deleta um endereço específico
+	"""
+	permission_classes = [IsAuthenticated]
+	http_method_names = ['delete']
+	lookup_url_kwarg = 'address_id'
+
+	def get_queryset(self):
+		return Address.objects.filter(user=self.request.user)
+
 	@extend_schema(
 		tags=["Endereço"],
 		summary="Deletar endereço específico",
@@ -823,11 +797,11 @@ class AddressDetailView(APIView):
 			401: OpenApiTypes.OBJECT,
 		},
 	)
-	def delete(self, request, address_id):
+	def delete(self, request, *args, **kwargs):
 		"""
 		Deleta um endereço específico do usuário autenticado.
 		"""
-		address = self.get_object(address_id, request.user)
+		address = self.get_object()
 		address.delete()
 		return Response({
 			'message': 'Endereço deletado com sucesso'

@@ -723,46 +723,6 @@ class AnaliseDocumentoListView(APIView):
         return Response({"results": serializer.data}, status=status.HTTP_200_OK)
 
 
-# @extend_schema(
-#     summary="Atualizar/Editar analise de documento",
-#     description="Atualizar os documentos já enviados.",
-#     tags=["Due Diligence"],
-#     methods=["PATCH"],
-#     request=AnaliseDocumentoUpdateSerializer,
-#     responses={
-#         200: OpenApiResponse(
-#             description="Documento atualizado.",
-#             response=AnaliseDocumentoUpdateSerializer,
-#             examples=[
-#                 OpenApiExample(
-#                     name="Atualizado com sucesso",
-#                     summary="Documento atualizado com sucesso",
-#                     value={
-#                         "id": "445eea4b-0cd7-4b29-a765-850d5a0f91d3",
-#                         "due_diligence": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
-#                         "documento": "c6003d02-bf64-477a-b459-0b41f207ac76",
-#                         "status": "APROVADO",
-#                         "observacoes_analise": "Documento verificado.",
-#                         "data_analise": "19-01-2026 15:33",
-#                         "analisado_por": "4f1fc912-3111-461e-8094-0aef157cdbe6",
-#                         "detalhes_usuario": {
-#                             "id": "4f1fc912-3111-461e-8094-0aef157cdbe6",
-#                             "name": "Mario adm",
-#                             "email": "email@lexpay.com.br",
-#                             "type_user": "user_default",
-#                             "avatar": "http://127.0.0.1:8000/media/avatars/default.png"
-#                         }
-#                     }
-#                 )
-#             ]
-#         ),
-#         400: OpenApiResponse(description="Dados não validos"),
-#         403: OpenApiResponse(description="Sem permissão para alterar este documento"),
-#         404: OpenApiResponse(description="Documento não encontrada")
-#     }
-# )
-
-
 @extend_schema(
     summary="Ataualização de analise de documentos.",
     description="Atualizar os dados da analise de documento, podendo atualizar os dados de forma geral ou parcial.",
@@ -830,6 +790,7 @@ class AnaliseDocumentoUpdateView(APIView):
             ),
             pk=pk,
         )
+
         if user.type_user == TypeUserChoices.ADVOGADO:
             advogado_oficio = queryset.due_diligence.precatorio.advogado
             if advogado_oficio != user:

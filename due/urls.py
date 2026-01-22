@@ -11,6 +11,9 @@ from .views import (
     DueUpdateView,
 )
 
+router = DefaultRouter()
+router.register(r'aprovadas', DueAprovadasViewSet, basename='due-aprovadas')
+
 urlpatterns = [
     path(
         "diligencias/",

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
-from auth.models import Address, User, TypeUserChoices
+from auth.models import Address, User
 
 
 class LoginRequestSerializer(serializers.Serializer):
@@ -38,11 +38,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True, required=True)
     addresses = AddressSerializer(many=True, required=False)
-    
+
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 'password', 'password_confirm', 
+            'id', 'email', 'username', 'password', 'password_confirm',
             'name', 'cpf', 'phone', 'avatar', 'type_user', 'addresses'
         )
         read_only_fields = ('id',)
@@ -70,15 +70,15 @@ class UserCreateSerializer(serializers.ModelSerializer):
         addresses_data = validated_data.pop('addresses', [])
         validated_data.pop('password_confirm', None)
         password = validated_data.pop('password')
-        
+
         user = User.objects.create_user(
             password=password,
             **validated_data
         )
-        
+
         for address_data in addresses_data:
             Address.objects.create(user=user, **address_data)
-        
+
         return user
 
 
@@ -88,12 +88,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     Permite atualizar usuário e seus endereços.
     """
     addresses = AddressSerializer(many=True, required=False)
-    
+
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 'name', 'cpf', 'phone', 
-            'avatar', 'type_user', 'is_active', 'is_staff', 'created_at', 
+            'id', 'email', 'username', 'name', 'cpf', 'phone',
+            'avatar', 'type_user', 'is_active', 'is_staff', 'created_at',
             'updated_at', 'addresses'
         )
         read_only_fields = ('id', 'is_active', 'is_staff', 'created_at', 'updated_at')
@@ -104,17 +104,17 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         Permite criar novos endereços, atualizar existentes ou deletar endereços.
         """
         addresses_data = validated_data.pop('addresses', None)
-        
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-        
+
         if addresses_data is not None:
             existing_address_ids = set()
-            
+
             for address_data in addresses_data:
                 address_id = address_data.pop('id', None)
-                
+
                 if address_id:
                     try:
                         address = Address.objects.get(id=address_id, user=instance)
@@ -126,7 +126,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
                         Address.objects.create(user=instance, **address_data)
                 else:
                     Address.objects.create(user=instance, **address_data)
-        
+
         return instance
 
 
@@ -136,12 +136,12 @@ class UserSerializer(serializers.ModelSerializer):
     Retorna usuário com todos os endereços associados.
     """
     addresses = AddressSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 'name', 'cpf', 'phone', 
-            'avatar', 'type_user', 'is_active', 'is_staff', 'created_at', 
+            'id', 'email', 'username', 'name', 'cpf', 'phone',
+            'avatar', 'type_user', 'is_active', 'is_staff', 'created_at',
             'updated_at', 'addresses'
         )
         read_only_fields = ('id', 'is_active', 'is_staff', 'created_at', 'updated_at')
