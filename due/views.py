@@ -227,7 +227,7 @@ class DueAprovadasViewSet(ModelViewSet):
 
     @extend_schema(
         summary="Listagem de Diligencias aprovadas",
-        description="Lista as diligencias com base no perfil, somente o master todas as diligencias.",
+        description="Lista as diligencias aprovadas com base no perfil, um advogado só consegue visualizar as diligencias que ele esta envolvido. Um broker e/ou cedente só visualizam com base nos precatórios que estão envolvidos, somente o Administrador vê tudo.",
         tags=['Due Diligence'],
         responses={
             200: OpenApiResponse(
