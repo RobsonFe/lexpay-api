@@ -1,13 +1,15 @@
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
 from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.permissions import IsAuthenticated
 from django.db import IntegrityError
-from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin, IsAdvogadoOrBroker)
+from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin, IsAdvogadoOrBrokerOrCedente)
 from due.models import DueDiligence, TypeUserChoices, AnaliseDocumento
 from due.serializer import DueDiligenceSerializer, DueDiligenceCreateSerializer, AnaliseDocumentoSerializer, AnaliseDocumentoUpdateSerializer
 from auth.models import TypeUserChoices
@@ -211,6 +213,188 @@ class DueListPrioridadeView(generics.ListAPIView):
             else:
                 return DueDiligence.objects.none()
         return queryset
+
+
+class DueAprovadasViewSet(ModelViewSet):
+    permission_classes = [IsAdvogadoOrBrokerOrCedente]
+    serializer_class = DueDiligenceSerializer
+    queryset = DueDiligence.objects.all()
+    
+    def get_queryset(self):
+        return DueDiligence.objects.select_related(
+            'analista','precatorio','precatorio__broker','precatorio__cedente'
+        ).all()
+
+    @extend_schema(
+        summary="Listagem de Diligencias aprovadas",
+        description="Lista as diligencias aprovadas com base no perfil, um advogado só consegue visualizar as diligencias que ele esta envolvido. Um broker e/ou cedente só visualizam com base nos precatórios que estão envolvidos, somente o Administrador vê tudo.",
+        tags=['Due Diligence'],
+        responses={
+            200: OpenApiResponse(
+                description="Listagem feita com sucesso.",
+                response=DueDiligenceSerializer(many=True),
+                examples=[
+                    OpenApiExample(
+                        name="Listagem de Due Paginada",
+                        summary="Os dados que são devolvidos no Json retornam nesse padrão.",
+                        value={
+                            "count": 20,
+                            "next": "http://127.0.0.1:8000/api/v1/due/aprovadas/listar-diligencias/?page=2",
+                            "previous": None,
+                            "results": [
+                                {
+                                    "id": "cb6ebea6-68d3-4733-9b09-6efd4c7fd570",
+                                    "precatorio": "3ab28033-12f6-4ef1-9257-f88f09575521",
+                                    "precatorio_detalhes": {
+                                        "id": "3ab28033-12f6-4ef1-9257-f88f09575521",
+                                        "numero_processo": "0002938-99.2025.8.26.0678",
+                                        "natureza": "Alimentar",
+                                        "valor_principal": "190000.00",
+                                        "valor_venda": "100000.00",
+                                        "tribunal": {
+                                            "id": "38bc8e2f-...",
+                                            "nome": "Tribunal Regional Federal da 5ª Região",
+                                            "sigla": "TRF5",
+                                            "uf": "PE"
+                                        },
+                                        "cedente": {
+                                            "id": "f83e8737-...",
+                                            "name": "Mario J",
+                                            "email": "mario@lexpay.com",
+                                            "type_user": "Cedente"
+                                        },
+                                        "documentos": [
+                                            {
+                                                "id": "76f1d019-...",
+                                                "titulo": "mario docs",
+                                                "arquivo": "http://.../docs/2026/01/EN_rjM3adL.pdf"
+                                            }
+                                        ]
+                                    },
+                                    "analista": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+                                    "status_analise": "APROVADO",
+                                    "observacoes": "Atualização da due por nova rota 22/01/2026.",
+                                    "created_at": "19-01-2026 08:55",
+                                    "user_detalhes": {
+                                        "name": "Mario adm",
+                                        "email": "administrador@lexpay.com.br",
+                                        "type_user": "Administrador"
+                                    }
+                                },
+                                {
+                                    "id": "449661cb-50b4-40b1-90e1-fefc7a7320c1",
+                                    "precatorio_detalhes": {
+                                        "numero_processo": "0002938-99.2025.8.26.0675",
+                                        "tribunal": {"sigla": "TJSP", "uf": "SP"},
+                                        "cedente": {"name": "Mario Cedente"}
+                                    },
+                                    "status_analise": "APROVADO",
+                                    "observacoes": "Precatório liberado 12/01/2026"
+                                }
+                            ]
+                        }
+                    )
+                ]
+            )
+        }
+    )
+    
+    @action(detail=False, methods=['get'], url_path="listar-diligencias")
+    def listar_due_aprovadas(self, request):
+        
+        user = request.user
+        status = DueDiligence.StatusAnalise.APROVADO
+        """
+            Acessando diretamente o get_queryset(), acessamos o nosso queryset personalizado que já busca os dados que vamos usar.
+        """
+        queryset = self.get_queryset().filter(status_analise=status)
+        
+        if user.type_user == TypeUserChoices.ADMINISTRADOR:
+            qs = queryset
+
+        elif user.type_user == TypeUserChoices.ADVOGADO:
+            qs = queryset.filter(analista=user)
+        
+        elif user.type_user == TypeUserChoices.BROKER:
+            qs = queryset.filter(precatorio__broker=user)
+        
+        elif user.type_user == TypeUserChoices.CEDENTE:
+            qs = queryset.filter(precatorio__cedente=user)
+        else:
+            qs = queryset.none()
+        
+        paginacao = self.paginate_queryset(queryset=qs)
+        if paginacao is not None:
+            serializer = self.get_serializer(paginacao, many=True)
+            return self.get_paginated_response(data=serializer.data)
+        
+        serializer = self.get_serializer(qs, many=True)
+        return Response({'results': serializer.data})
+    
+    
+    @extend_schema(
+        summary="Editar Diligencias com o PATCH",
+        description="Atualização de campos de uma diligencia, advogados podem alteram suas próprias diligencias e o admin altera qualquer uma.",
+        tags=['Due Diligence'],
+        request=OpenApiRequest(
+            request=DueDiligenceSerializer,
+            examples=[
+                OpenApiExample(
+                    name="Exemplo de envio de dados na requisição",
+                    summary="Atualizando os campos de observação e status de um diligencia",
+                    description="Exemplo de envio para aprovar uma Due.",
+                    value={
+                        "observacoes": "Documentação foi verificada e aprovada com sucesso, podemos seguir com o processo.",
+                        "status_analise": "APROVADO"
+                    }
+                )
+            ]
+        ),
+        responses={
+            200: OpenApiResponse(
+                description="Diligência atualizada com sucesso.",
+                response=DueDiligenceSerializer,
+                examples=[
+                    OpenApiExample(
+                        name="Resposta de Sucesso",
+                        value={
+                            "id": "cb6ebea6-68d3-4733-9b09-6efd4c7fd570",
+                            "status_analise": "APROVADO",
+                            "observacoes": "Análise concluída. Documentação validada.",
+                            "updated_at": "22-01-2026 14:30",
+                            "analista": "4f1fc912-3111-461e-8094-0aef157cdbe6"
+                        }
+                    )
+                ]
+            ),
+            403: OpenApiResponse(description="Permissão negada (Não é o dono ou perfil inválido)."),
+            404: OpenApiResponse(description="Due Diligence não encontrada.")
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        user = request.user
+        """
+            O self.get_object() faz de forma implicita a busca do objeto, o método chamado faz a seguinta chamada:
+            try:
+                instance = DueDiligence.objects.get(id=pk)
+            except DueDiligence.DoesNotExist:
+                return Response(status=404)
+            
+            Usando o get_object() ele já faz isso e ainda retorna um 404 caso o objeto não exista e faz a checagem de permissões com check_object_permissions.
+        
+        """
+        instance = self.get_object()
+        
+        if user.type_user == TypeUserChoices.ADMINISTRADOR:
+            pass
+        elif user.type_user == TypeUserChoices.ADVOGADO:
+            if instance.analista != user:
+                return Response({"error":"Somente as Diligencias sobre sua responsabilidade podem ser editadas."}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            return Response(
+                {"error":"Você não tem permissão para edição."},
+                status=status.HTTP_403_FORBIDDEN)        
+        return super().partial_update(request, *args, **kwargs)
 
 @extend_schema(
     summary="Edição de Diligencias - Admin",
@@ -702,47 +886,6 @@ class AnaliseDocumentoListView(APIView):
         return Response({
             'results':serializer.data
         },status=status.HTTP_200_OK)
-        
-    
-
-# @extend_schema(
-#     summary="Atualizar/Editar analise de documento",
-#     description="Atualizar os documentos já enviados.",
-#     tags=["Due Diligence"],
-#     methods=["PATCH"],
-#     request=AnaliseDocumentoUpdateSerializer,
-#     responses={
-#         200: OpenApiResponse(
-#             description="Documento atualizado.",
-#             response=AnaliseDocumentoUpdateSerializer,
-#             examples=[
-#                 OpenApiExample(
-#                     name="Atualizado com sucesso",
-#                     summary="Documento atualizado com sucesso",
-#                     value={
-#                         "id": "445eea4b-0cd7-4b29-a765-850d5a0f91d3",
-#                         "due_diligence": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
-#                         "documento": "c6003d02-bf64-477a-b459-0b41f207ac76",
-#                         "status": "APROVADO",
-#                         "observacoes_analise": "Documento verificado.",
-#                         "data_analise": "19-01-2026 15:33",
-#                         "analisado_por": "4f1fc912-3111-461e-8094-0aef157cdbe6",
-#                         "detalhes_usuario": {
-#                             "id": "4f1fc912-3111-461e-8094-0aef157cdbe6",
-#                             "name": "Mario adm",
-#                             "email": "email@lexpay.com.br",
-#                             "type_user": "user_default",
-#                             "avatar": "http://127.0.0.1:8000/media/avatars/default.png"
-#                         }
-#                     }
-#                 )
-#             ]
-#         ),
-#         400: OpenApiResponse(description="Dados não validos"),
-#         403: OpenApiResponse(description="Sem permissão para alterar este documento"),
-#         404: OpenApiResponse(description="Documento não encontrada")
-#     }
-# )
 
 @extend_schema(
     summary="Ataualização de analise de documentos.",
@@ -808,6 +951,7 @@ class AnaliseDocumentoUpdateView(APIView):
             AnaliseDocumento.objects.select_related('due_diligence__precatorio__advogado'),
             pk=pk
         )
+
         if user.type_user == TypeUserChoices.ADVOGADO:
             advogado_oficio = queryset.due_diligence.precatorio.advogado
             if advogado_oficio != user:
