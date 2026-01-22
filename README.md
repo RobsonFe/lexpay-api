@@ -1,8 +1,8 @@
-# API do Projeto LexPay
+# API LexPay
 
 ## Descrição
 
-API de gerenciamento de precatórios construída com Django Rest Framework.
+O projeto LexPay é uma API REST para gestão e negociação de precatórios (títulos judiciais) que conecta cedentes (titulares), brokers, advogados e administradores, permitindo cadastro do ativo, anexação de documentos, execução de due diligence e geração de propostas de antecipação com cálculo financeiro e trilha de histórico.
 
 ## Objetivo
 
@@ -11,8 +11,7 @@ API de gerenciamento de precatórios construída com Django Rest Framework.
 ## Inspiração
 
 - Esse sistema foi desenvolvido como um prototipo básico para treinamento de desenvlvedores juniors se inteirando em um sistema real de gerenciamento de precatórios da Ativos, que é o Celer.
-
-- Origem do nome: LexPay (A união da lei com o pagamento)
+- Origem do nome: LexPay (A união da LEI com o PAGAMENTO)
 
 ## Tecnologias
 
@@ -27,7 +26,6 @@ API de gerenciamento de precatórios construída com Django Rest Framework.
 - drf spectacular 0.29.0
 - django filter 25.2
 - python decouple 3.8
-
 
 ## Como Instalar as dependencias do Projeto
 
@@ -44,13 +42,11 @@ python -m venv venv
   ```sh
   venv\Scripts\activate.bat
   ```
-
 - No Windows (PowerShell):
 
   ```sh
   venv\Scripts\Activate.ps1
   ```
-
 - No Git Bash ou Linux/Mac:
 
   ```sh
@@ -91,6 +87,7 @@ PGADMIN_PORT=5050
 ```
 
 **Observações importantes:**
+
 - `DB_HOST`: Use `localhost` quando o Django estiver rodando fora do Docker. Use `postgres` (nome do serviço) quando o Django estiver rodando dentro do Docker.
 - `DB_PORT`: Porta externa mapeada (5433 por padrão). A porta interna do container é sempre 5432.
 - Se as variáveis não forem definidas, os valores padrão do `docker-compose.yml` serão utilizados.
@@ -106,6 +103,7 @@ docker-compose up -d
 O comando `-d` executa os containers em modo detached (em segundo plano).
 
 **Serviços iniciados:**
+
 - **PostgreSQL**: Container `lexpay-db` na porta `5433` (ou a porta definida em `DB_PORT`)
 - **PgAdmin**: Container `lexpay-pgadmin` na porta `5050` (ou a porta definida em `PGADMIN_PORT`)
 
@@ -149,10 +147,11 @@ docker-compose down -v
 
 1. Acesse: `http://localhost:5050` (ou a porta definida em `PGADMIN_PORT`)
 2. Faça login com:
+
    - **Email**: `admin@lexpay.com` (ou o valor de `PGADMIN_EMAIL`)
    - **Senha**: `lexpay` (ou o valor de `PGADMIN_PASSWORD`)
-
 3. Para adicionar o servidor PostgreSQL no PgAdmin:
+
    - Clique com botão direito em "Servers" → "Register" → "Server"
    - **Name**: LexPay DB
    - **Host**: `postgres` (nome do serviço no Docker)
@@ -189,6 +188,7 @@ DATABASES = {
 ```
 
 **Importante**: Certifique-se de que o valor de `DB_HOST` no `.env` está correto:
+
 - `DB_HOST=localhost` → Quando o Django roda na sua máquina
 - `DB_HOST=postgres` → Quando o Django roda dentro do Docker
 
@@ -203,16 +203,19 @@ python manage.py migrate
 ### Troubleshooting
 
 **Problema**: Erro de conexão com o banco de dados
+
 - Verifique se os containers estão rodando: `docker-compose ps`
 - Verifique se as variáveis no `.env` estão corretas
 - Verifique se a porta não está em uso: `netstat -an | findstr 5433` (Windows)
 
 **Problema**: Container não inicia
+
 - Verifique os logs: `docker-compose logs postgres`
 - Verifique se o Docker está em execução
 - Verifique se a porta está disponível
 
 **Problema**: Dados foram perdidos
+
 - Os dados são persistidos em volumes Docker. Use `docker-compose down` (sem `-v`) para preservar os dados
 - Os volumes são: `postgres_data` e `pgadmin_data`
 
@@ -223,6 +226,7 @@ A documentação da API está disponível em: `http://localhost:8000/api/docs/`
 A documentação da API está disponível em: `http://localhost:8000/api/schema/redoc/`
 
 ### Como configurar os Endpoints na Documentação
+
 - No arquivo `core/settings.py` na variável `SPECTACULAR_SETTINGS`
 - Adicione a tag do endpoint no campo `tags`
 - Adicione a descrição do endpoint no campo `description`
@@ -231,10 +235,10 @@ A documentação da API está disponível em: `http://localhost:8000/api/schema/
 - Adicione o exemplo de requisição no campo `examples`
 - Adicione o exemplo de resposta no campo `examples`
 - Adicione o exemplo de resposta no campo `examples`
-
 - Use o `Hook` para filtrar os endpoints que possuem uma das tags permitidas.
 
 **Exemplo:**
+
 ```python
 'TAGS': [
     {'name': 'Autenticação', 'description': 'Configurações referentes à autenticação do sistema'},

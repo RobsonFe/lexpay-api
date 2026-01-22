@@ -1,9 +1,11 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import DueDiligence, AnaliseDocumento
 from oficio.serializer import UserLightSerializer, PrecatorioSerializer
 
 
 class DueDiligenceSerializer(serializers.ModelSerializer):
+    
     precatorio_detalhes = PrecatorioSerializer(source='precatorio', read_only=True)
 
     user_detalhes = UserLightSerializer(source='analista', read_only=True)
@@ -76,3 +78,65 @@ class DueDiligenceSerializer(serializers.ModelSerializer):
             data['documento_aprovado'] = True
         
         return data
+
+class DueDiligenceCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= DueDiligence
+        fields = ['id', 'precatorio', 'observacoes', 'prioridade', 'analista']
+        read_only_fields = ['id','analista']
+
+class AnaliseDocumentoSerializer(serializers.ModelSerializer):
+    precatorio_detalhes = PrecatorioSerializer(source='due_diligence.precatorio', read_only=True)
+    detalhes_usuario = UserLightSerializer(source='analisado_por', read_only=True)
+    due_diligence_detalhes = DueDiligenceSerializer(source='due_diligence', read_only=True)
+
+    class Meta:
+        model = AnaliseDocumento
+        fields = [
+            'id', 
+            'status',
+            'observacoes_analise',
+            'data_analise',
+            'documento',             
+            'due_diligence',      
+            'analisado_por',      
+            'due_diligence_detalhes',
+            'precatorio_detalhes',
+            'detalhes_usuario'
+        ]
+        read_only_fields = fields
+
+class AnaliseDocumentoUpdateSerializer(serializers.ModelSerializer):
+    
+    detalhes_usuario = UserLightSerializer(source='analisado_por', read_only=True)
+    class Meta:
+        model = AnaliseDocumento
+        fields = [
+            'id', 
+            'due_diligence',          
+            'documento',       
+            'status',
+            'observacoes_analise',
+            'data_analise',
+            'analisado_por',          
+            'detalhes_usuario',          
+        ]
+        read_only_fields = [
+            'id', 
+            'due_diligence',
+            'detalhes_usuario',
+            'precatorio_detalhes'
+        ]
+        
+        
+    def update(self, instance, validated_data):
+        user = self.context['request'].user
+        instance.data_analise = timezone.now()
+        instance.analisado_por = user
+        
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        
+        instance.save()
+        
+        return instance
