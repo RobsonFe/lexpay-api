@@ -59,7 +59,19 @@ class IsAdvogadoOrBroker(permissions.BasePermission):
             TypeUserChoices.ADVOGADO, 
             TypeUserChoices.BROKER,
         ]
-
+        
+class IsAdvogadoOrBrokerOrCedente(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_staff:
+            return True
+        return user.type_user in [
+            TypeUserChoices.ADVOGADO, 
+            TypeUserChoices.BROKER,
+            TypeUserChoices.CEDENTE
+        ]
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         user = request.user

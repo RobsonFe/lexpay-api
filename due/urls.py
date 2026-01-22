@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import (
     DueDiligenceListCreateView, 
     DueDiligenceRetrieveUpdateView, 
@@ -7,10 +8,15 @@ from .views import (
     DueListView, 
     DueListPrioridadeView,
     AnaliseDocumentoUpdateView,
-    AnaliseDocumentoListView
+    AnaliseDocumentoListView,
+    DueAprovadasViewSet
     )
 
+router = DefaultRouter()
+router.register(r'aprovadas', DueAprovadasViewSet, basename='due-aprovadas')
+
 urlpatterns = [
+    path('', include(router.urls)),
     path('diligencias/', DueDiligenceListCreateView.as_view(), name='diligence-list-create'),
     path('diligencias/<uuid:pk>/', DueDiligenceRetrieveUpdateView.as_view(), name='diligence-detail-update'),
     path('criar/', DueCreateView.as_view(), name='due-create'),
