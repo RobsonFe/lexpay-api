@@ -1,13 +1,15 @@
 from rest_framework import generics
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
 from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.permissions import IsAuthenticated
 from django.db import IntegrityError
-from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin)
-from due.models import DueDiligence, TypeUserChoices
-from due.serializer import DueDiligenceSerializer, DueDiligenceCreateSerializer
+from due.permissions import (IsBrokerOrAdmin, IsAdminOrAdvogado, IsAdminBrokerOrAdvogado, IsAdmin, IsAdvogadoOrBroker)
+from due.models import DueDiligence, TypeUserChoices, AnaliseDocumento
+from due.serializer import DueDiligenceSerializer, DueDiligenceCreateSerializer, AnaliseDocumentoSerializer, AnaliseDocumentoUpdateSerializer
 from auth.models import TypeUserChoices
 
 from drf_spectacular.utils import (
@@ -16,7 +18,8 @@ from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiResponse,
     OpenApiParameter,
-    OpenApiTypes
+    OpenApiTypes,
+    OpenApiRequest
 )
 
 @extend_schema_view(
@@ -259,7 +262,6 @@ class DueUpdateView(generics.UpdateAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
             
-
 @extend_schema_view(
     get=extend_schema(
         summary="Listar Diligências por usuário",
@@ -405,3 +407,417 @@ class DueCreateView(generics.CreateAPIView):
             serializer.save(analista=user)
         except IntegrityError:
             raise ValidationError({'error':'Diligencia já cadastrada no sistema'})
+  
+@extend_schema(
+    summary="Listar Analises de Documentos",
+    description="Lista analises por responsável, somente para Advogados e Brokers.",
+    tags=["Due Diligence"],
+    parameters=[
+        OpenApiParameter(
+            name='id',
+            type=OpenApiTypes.UUID,
+            location=OpenApiParameter.QUERY,
+            description="ID da analise do documento",
+            required=True
+        )
+    ],
+    responses={
+        200: OpenApiResponse(
+            description="Lista de analise de documentos.",
+            response=AnaliseDocumentoSerializer(many=True),
+            examples=[
+                OpenApiExample(
+                    name="Minhas Analises",
+                    summary="Lista de analises de documentos do usuário logado",
+                    value=[
+                        {
+			"id": "445eea4b-0cd7-4b29-a765-850d5a0f91d3",
+			"status": "PENDENTE",
+			"observacoes_analise": 'null',
+			"data_analise": 'null',
+			"documento": "c6003d02-bf64-477a-b459-0b41f207ac76",
+			"due_diligence": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
+			"analisado_por": 'null',
+			"due_diligence_detalhes": {
+				"id": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
+				"precatorio": "1889cc4c-40f9-43e5-ba87-7e3a5948c962",
+				"precatorio_detalhes": {
+					"id": "1889cc4c-40f9-43e5-ba87-7e3a5948c962",
+					"numero_processo": "0002938-99.2025.8.26.0542",
+					"natureza": "Alimentar",
+					"natureza_display": "Alimentar",
+					"valor_principal": "100000.00",
+					"valor_venda": "80000.00",
+					"percentual_honorarios": "10.00",
+					"data_expedicao": "01-02-2024",
+					"ano_orcamentario": 2025,
+					"status": "Disponível",
+					"status_display": "Disponível",
+					"descricao": "Precatório alimentar PE",
+					"tribunal": {
+						"id": "3fe3cdce-b0f0-404b-af24-cd2f7a1e55b9",
+						"nome": "Tribunal de Justiça de São Paulo",
+						"sigla": "TJSP",
+						"uf": "SP"
+					},
+					"ente_devedor": {
+						"id": "398af7c2-0d66-4a2f-a215-09640807e6ed",
+						"nome": "Fazenda do Estado de São Paulo",
+						"cnpj": "46.379.400/0001-50",
+						"esfera": "Estadual"
+					},
+					"cedente": {
+						"id": "c951fd85-8a05-478b-99a1-2b465ad25d4e",
+						"name": "Ana Broker",
+						"email": "analista@lexpay.com.br",
+						"type_user": "Broker",
+						"avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+					},
+					"advogado": 'null',
+					"documentos": [
+						{
+							"id": "c6003d02-bf64-477a-b459-0b41f207ac76",
+							"precatorio": "1889cc4c-40f9-43e5-ba87-7e3a5948c962",
+							"titulo": "teste insomnia31",
+							"arquivo": "http://127.0.0.1:8000/media/precatorios/docs/2026/01/EN_1eifO2I.pdf",
+							"enviado_em": "07-01-2026 14:44",
+							"extension": ".pdf",
+							"size_mb": 0.2
+						}
+					],
+					"created_at": "07-01-2026 14:44",
+					"updated_at": "07-01-2026 14:47"
+				},
+				"analista": "c951fd85-8a05-478b-99a1-2b465ad25d4e",
+				"status_analise": "APROVADO",
+				"data_inicio_analise": 'null',
+				"data_conclusao_analise": "07-01-2026 14:47",
+				"observacoes": "Precatório liberado",
+				"documento_aprovado": 'true',
+				"motivo_repactuacao": 'null',
+				"created_at": "07-01-2026 14:45",
+				"updated_at": "07-01-2026 14:47",
+				"user_detalhes": {
+					"id": "c951fd85-8a05-478b-99a1-2b465ad25d4e",
+					"name": "Ana Broker",
+					"email": "analista@lexpay.com.br",
+					"type_user": "Broker",
+					"avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+				}
+			},
+			"precatorio_detalhes": {
+				"id": "1889cc4c-40f9-43e5-ba87-7e3a5948c962",
+				"numero_processo": "0002938-99.2025.8.26.0542",
+				"natureza": "Alimentar",
+				"natureza_display": "Alimentar",
+				"valor_principal": "100000.00",
+				"valor_venda": "80000.00",
+				"percentual_honorarios": "10.00",
+				"data_expedicao": "01-02-2024",
+				"ano_orcamentario": 2025,
+				"status": "Disponível",
+				"status_display": "Disponível",
+				"descricao": "Precatório alimentar PE",
+				"tribunal": {
+					"id": "3fe3cdce-b0f0-404b-af24-cd2f7a1e55b9",
+					"nome": "Tribunal de Justiça de São Paulo",
+					"sigla": "TJSP",
+					"uf": "SP"
+				},
+				"ente_devedor": {
+					"id": "398af7c2-0d66-4a2f-a215-09640807e6ed",
+					"nome": "Fazenda do Estado de São Paulo",
+					"cnpj": "46.379.400/0001-50",
+					"esfera": "Estadual"
+				},
+				"cedente": {
+					"id": "c951fd85-8a05-478b-99a1-2b465ad25d4e",
+					"name": "Ana Broker",
+					"email": "analista@lexpay.com.br",
+					"type_user": "Broker",
+					"avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+				},
+				"advogado": 'null',
+				"documentos": [
+					{
+						"id": "c6003d02-bf64-477a-b459-0b41f207ac76",
+						"precatorio": "1889cc4c-40f9-43e5-ba87-7e3a5948c962",
+						"titulo": "teste insomnia31",
+						"arquivo": "http://127.0.0.1:8000/media/precatorios/docs/2026/01/EN_1eifO2I.pdf",
+						"enviado_em": "07-01-2026 14:44",
+						"extension": ".pdf",
+						"size_mb": 0.2
+					}
+				],
+				"created_at": "07-01-2026 14:44",
+				"updated_at": "07-01-2026 14:47"
+			},
+			"detalhes_usuario": 'null'
+		},
+		{
+			"id": "41087950-7e2d-4da3-a6de-89c3a147ac42",
+			"status": "PENDENTE",
+			"observacoes_analise": 'null',
+			"data_analise": 'null',
+			"documento": "64331e52-1916-4799-b3b4-1170524603a5",
+			"due_diligence": "9b0af39d-b559-4071-8354-8f39d612b46d",
+			"analisado_por": 'null',
+			"due_diligence_detalhes": {
+				"id": "9b0af39d-b559-4071-8354-8f39d612b46d",
+				"precatorio": "c68b9240-a7f1-4b99-9400-84a0bc11a2d0",
+				"precatorio_detalhes": {
+					"id": "c68b9240-a7f1-4b99-9400-84a0bc11a2d0",
+					"numero_processo": "0002938-99.2025.8.26.0550",
+					"natureza": "Alimentar",
+					"natureza_display": "Alimentar",
+					"valor_principal": "100000.00",
+					"valor_venda": "80000.00",
+					"percentual_honorarios": "10.00",
+					"data_expedicao": "01-02-2024",
+					"ano_orcamentario": 2025,
+					"status": "Disponível",
+					"status_display": "Disponível",
+					"descricao": "Precatório alimentar PE",
+					"tribunal": {
+						"id": "3fe3cdce-b0f0-404b-af24-cd2f7a1e55b9",
+						"nome": "Tribunal de Justiça de São Paulo",
+						"sigla": "TJSP",
+						"uf": "SP"
+					},
+					"ente_devedor": {
+						"id": "398af7c2-0d66-4a2f-a215-09640807e6ed",
+						"nome": "Fazenda do Estado de São Paulo",
+						"cnpj": "46.379.400/0001-50",
+						"esfera": "Estadual"
+					},
+					"cedente": {
+						"id": "c951fd85-8a05-478b-99a1-2b465ad25d4e",
+						"name": "Ana Broker",
+						"email": "analista@lexpay.com.br",
+						"type_user": "Broker",
+						"avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+					},
+					"advogado": 'null',
+					"documentos": [
+						{
+							"id": "64331e52-1916-4799-b3b4-1170524603a5",
+							"precatorio": "c68b9240-a7f1-4b99-9400-84a0bc11a2d0",
+							"titulo": "teste erro",
+							"arquivo": "http://127.0.0.1:8000/media/precatorios/docs/2026/01/EN_sAGXuqE.pdf",
+							"enviado_em": "07-01-2026 15:17",
+							"extension": ".pdf",
+							"size_mb": 0.2
+						}
+					],
+					"created_at": "07-01-2026 15:14",
+					"updated_at": "07-01-2026 15:18"
+				},
+				"analista": "c951fd85-8a05-478b-99a1-2b465ad25d4e",
+				"status_analise": "APROVADO",
+				"data_inicio_analise": 'null',
+				"data_conclusao_analise": "07-01-2026 15:18",
+				"observacoes": "Precatório liberado",
+				"documento_aprovado": 'true',
+				"motivo_repactuacao": 'null',
+				"created_at": "07-01-2026 15:17",
+				"updated_at": "07-01-2026 15:36",
+				"user_detalhes": {
+					"id": "c951fd85-8a05-478b-99a1-2b465ad25d4e",
+					"name": "Ana Broker",
+					"email": "analista@lexpay.com.br",
+					"type_user": "Broker",
+					"avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+				}
+			},
+			"precatorio_detalhes": {
+				"id": "c68b9240-a7f1-4b99-9400-84a0bc11a2d0",
+				"numero_processo": "0002938-99.2025.8.26.0550",
+				"natureza": "Alimentar",
+				"natureza_display": "Alimentar",
+				"valor_principal": "100000.00",
+				"valor_venda": "80000.00",
+				"percentual_honorarios": "10.00",
+				"data_expedicao": "01-02-2024",
+				"ano_orcamentario": 2025,
+				"status": "Disponível",
+				"status_display": "Disponível",
+				"descricao": "Precatório alimentar PE",
+				"tribunal": {
+					"id": "3fe3cdce-b0f0-404b-af24-cd2f7a1e55b9",
+					"nome": "Tribunal de Justiça de São Paulo",
+					"sigla": "TJSP",
+					"uf": "SP"
+				},
+				"ente_devedor": {
+					"id": "398af7c2-0d66-4a2f-a215-09640807e6ed",
+					"nome": "Fazenda do Estado de São Paulo",
+					"cnpj": "46.379.400/0001-50",
+					"esfera": "Estadual"
+				},
+				"cedente": {
+					"id": "c951fd85-8a05-478b-99a1-2b465ad25d4e",
+					"name": "Ana Broker",
+					"email": "analista@lexpay.com.br",
+					"type_user": "Broker",
+					"avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+				},
+				"advogado": 'null',
+				"documentos": [
+					{
+						"id": "64331e52-1916-4799-b3b4-1170524603a5",
+						"precatorio": "c68b9240-a7f1-4b99-9400-84a0bc11a2d0",
+						"titulo": "teste erro",
+						"arquivo": "http://127.0.0.1:8000/media/precatorios/docs/2026/01/EN_sAGXuqE.pdf",
+						"enviado_em": "07-01-2026 15:17",
+						"extension": ".pdf",
+						"size_mb": 0.2
+					}
+				],
+				"created_at": "07-01-2026 15:14",
+				"updated_at": "07-01-2026 15:18"
+			},
+			"detalhes_usuario": 'null'
+		}
+                    ]
+                )
+            ]
+        ),
+        403: OpenApiResponse(description="Acesso não autorizado"),
+        404: OpenApiResponse(description="Documento não localizada")
+    }
+)
+class AnaliseDocumentoListView(APIView):
+    permission_classes = [IsAdminBrokerOrAdvogado]
+    
+    def get(self, request):
+        user = request.user
+        queryset = AnaliseDocumento.objects.select_related('due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por', )
+        
+        if user.type_user == TypeUserChoices.ADMINISTRADOR:
+            queryset
+        if user.type_user == TypeUserChoices.ADVOGADO or user.type_user == TypeUserChoices.BROKER:
+            queryset.filter(analisado_por=user)
+        
+        serializer = AnaliseDocumentoSerializer(queryset, many=True)
+        return Response({
+            'results':serializer.data
+        },status=status.HTTP_200_OK)
+        
+    
+
+# @extend_schema(
+#     summary="Atualizar/Editar analise de documento",
+#     description="Atualizar os documentos já enviados.",
+#     tags=["Due Diligence"],
+#     methods=["PATCH"],
+#     request=AnaliseDocumentoUpdateSerializer,
+#     responses={
+#         200: OpenApiResponse(
+#             description="Documento atualizado.",
+#             response=AnaliseDocumentoUpdateSerializer,
+#             examples=[
+#                 OpenApiExample(
+#                     name="Atualizado com sucesso",
+#                     summary="Documento atualizado com sucesso",
+#                     value={
+#                         "id": "445eea4b-0cd7-4b29-a765-850d5a0f91d3",
+#                         "due_diligence": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
+#                         "documento": "c6003d02-bf64-477a-b459-0b41f207ac76",
+#                         "status": "APROVADO",
+#                         "observacoes_analise": "Documento verificado.",
+#                         "data_analise": "19-01-2026 15:33",
+#                         "analisado_por": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+#                         "detalhes_usuario": {
+#                             "id": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+#                             "name": "Mario adm",
+#                             "email": "email@lexpay.com.br",
+#                             "type_user": "user_default",
+#                             "avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+#                         }
+#                     }
+#                 )
+#             ]
+#         ),
+#         400: OpenApiResponse(description="Dados não validos"),
+#         403: OpenApiResponse(description="Sem permissão para alterar este documento"),
+#         404: OpenApiResponse(description="Documento não encontrada")
+#     }
+# )
+
+@extend_schema(
+    summary="Ataualização de analise de documentos.",
+    description="Atualizar os dados da analise de documento, podendo atualizar os dados de forma geral ou parcial.",
+    tags=["Due Diligence"],
+    request=OpenApiRequest(
+        request=AnaliseDocumentoUpdateSerializer,
+        examples=[
+            OpenApiExample(
+                name="Envio da payload",
+                summary="Campos que serão enviados",
+                description="Dados que serão enviados par atualizar a analise",
+                value={
+                    "status": "APROVADO",
+                    "observacoes_analise": "Documento aprovado na diligencia.",
+                    "motivo_repactuacao": ""
+                }
+            )
+        ]
+    ),
+    responses={
+        200: OpenApiResponse(
+            description="Sucesso na requisição.",
+            response=AnaliseDocumentoSerializer,
+            examples=[
+                OpenApiExample(
+                    name="Sucesso na execução da requisição",
+                    summary="Retorno da execução",
+                    value={
+                        "result": {
+                                "id": "445eea4b-0cd7-4b29-a765-850d5a0f91d3",
+                        "due_diligence": "96c42a6b-292d-4e1e-9ac8-3fad68c48817",
+                        "documento": "c6003d02-bf64-477a-b459-0b41f207ac76",
+                        "status": "APROVADO",
+                        "observacoes_analise": "Documento aprovado na diligencia.",
+                        "data_analise": "19-01-2026 15:33",
+                        "analisado_por": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+                            "detalhes_usuario": {
+                                "id": "4f1fc912-3111-461e-8094-0aef157cdbe6",
+                                "name": "Mario adm",
+                                "email": "email@lexpay.com.br",
+                                "type_user": "user_default",
+                                "avatar": "http://127.0.0.1:8000/media/avatars/default.png"
+                            }
+                        }
+                    }
+                )
+            ]
+        ),
+        400:OpenApiResponse("Verifique os campos e tente novamente."),
+        403:OpenApiResponse(description="Somento o dono desse ativo pode realizar edições.")
+    }
+    
+)
+class AnaliseDocumentoUpdateView(APIView):
+    permission_classes = [IsAdminOrAdvogado]
+    serializer_class = AnaliseDocumentoUpdateSerializer
+    http_method_names = ['patch']
+
+    def patch(self, request, pk):
+        user = request.user
+        queryset = get_object_or_404(
+            AnaliseDocumento.objects.select_related('due_diligence__precatorio__advogado'),
+            pk=pk
+        )
+        if user.type_user == TypeUserChoices.ADVOGADO:
+            advogado_oficio = queryset.due_diligence.precatorio.advogado
+            if advogado_oficio != user:
+                return Response({
+                    "error":'Somente o dono pode alterar.'
+                },status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = AnaliseDocumentoSerializer(instance=queryset, data=request.data, partial=True, context={"request": request})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response({'result':serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
