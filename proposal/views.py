@@ -89,31 +89,18 @@ class ProposalListView(APIView):
                     "results": [
                         {
                         "id": "357ab638-43c2-425d-b5a9-4f277c39fc84",
-
                         "precatorio": "3f09ae47-16ef-4c45-ab31-43c53446aaa4",
-
                         "proponente_nome": "Spatialcaver3",
-
                         "valor_proposto": "100000.00",
-
                         "taxa_desconto": "20.00",
-
                         "taxa_juros_anual": "12.50",
-
                         "prazo_pagamento_meses": 1,
-
                         "data_vencimento": "31-12-2026",
-
                         "observacoes": None,
-
                         "valor_liquido_cedente": "95000.00",
-
                         "valor_liquido_proponente": "99013.64",
-
                         "lucro": "100.00",
-
                         "status": "RASCUNHO",
-
                         "created_at": "13-01-2026 11:18",
                         }
                     ]
@@ -267,31 +254,18 @@ class InvestorOpportunitiesView(APIView):
                     "results": [
                         {
                         "id": "357ab638-43c2-425d-b5a9-4f277c39fc84",
-
                         "precatorio": "3f09ae47-16ef-4c45-ab31-43c53446aaa4",
-
                         "proponente_nome": "Spatialcaver3",
-
                         "valor_proposto": "100000.00",
-
                         "taxa_desconto": "20.00",
-
                         "taxa_juros_anual": "12.50",
-
                         "prazo_pagamento_meses": 1,
-
                         "data_vencimento": "31-12-2026",
-
                         "observacoes": None,
-
                         "valor_liquido_cedente": "95000.00",
-
                         "valor_liquido_proponente": "99013.64",
-
                         "lucro": "100.00",
-
                         "status": "RASCUNHO",
-
                         "created_at": "13-01-2026 11:18",
                         }
                     ]
