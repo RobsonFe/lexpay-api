@@ -274,7 +274,6 @@ class DueUpdateView(generics.UpdateAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-
 @extend_schema_view(
     get=extend_schema(
         summary="Listar Diligências por usuário",
@@ -384,7 +383,6 @@ class DueCreateView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
-            """Invoca o metôdo pai de CreateAPIView e encaminha o resquest para que seja feita a mentagem o Response"""
             response = super().create(request, *args, **kwargs)
             return Response(
                 {
