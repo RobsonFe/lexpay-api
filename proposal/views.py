@@ -13,16 +13,10 @@ from proposal.serializer import ProposalSerializer
 from proposal.services import ProposalService
 
 
-class CreateProposalView(generics.CreateAPIView):
-    permission_classes = [IsBrokerOrCedenteOrAdmin]
-    queryset = Proposal.objects.all()
-    serializer_class = ProposalSerializer
-
-    @extend_schema(
+@extend_schema(
     tags=["Propostas"],
     summary="Calculadora Automática de Propostas",
-    description="...",
-    request=ProposalSerializer,
+    description="Calculadora automática de propostas de antecipação de precatórios.",
     responses={
         201: ProposalSerializer,
         400: OpenApiResponse(description="Erro de validação nos dados."),
@@ -31,20 +25,27 @@ class CreateProposalView(generics.CreateAPIView):
     },
     examples=[
         OpenApiExample(
-            "Exemplo de Requisição (Broker)",
+            "Exemplo de Requisição",
             value={
                 "precatorio": "d290f1ee-6c54-4b01-90e6-d701748f0851",
                 "valor_proposto": "80000.00",
                 "taxa_desconto": "20.00",
                 "taxa_juros_anual": "12.50",
                 "prazo_pagamento_meses": 24,
-                "data_vencimento": "2026-12-31", # Use formato ISO YYYY-MM-DD
+                "data_vencimento": "2026-12-31",
                 "observacoes": "Observação sobre a proposta",
             },
-            request_only=True, # ISSO garante que apareça no corpo do POST
+            request_only=True,
         )
     ],
 )
+
+class CreateProposalView(generics.CreateAPIView):
+    permission_classes = [IsBrokerOrCedenteOrAdmin]
+    queryset = Proposal.objects.all()
+    serializer_class = ProposalSerializer
+
+    
     def perform_create(self, serializer):
         if getattr(self, "swagger_fake_view", False):
             return None
@@ -76,12 +77,11 @@ class ProposalListView(APIView):
         request=None,
         description= "Lista todas as propostas de antecipação de precatórios. de acordo com o usuário logado.",
         responses={
-            200: ProposalSerializer(many=True), # O Serializer define a estrutura (Schema)
+            200: ProposalSerializer(many=True),
             401: OpenApiResponse(description="Não autenticado"),
             403: OpenApiResponse(description="Sem permissão."),
             404: OpenApiResponse(description="Nada encontrado.")
         },
-        # Exemplos complexos de resposta costumam ser mapeados assim:
         examples=[
             OpenApiExample(
                 "Exemplo de Retorno com Dados",
@@ -118,8 +118,8 @@ class ProposalListView(APIView):
                         }
                     ]
                 },
-                response_only=True, # Define que este exemplo é apenas para a resposta
-                status_codes=["200"] # Associa ao status 200
+                response_only=True, 
+                status_codes=["200"]
             )
         ]
     )
@@ -199,12 +199,7 @@ class ProposalDeleteView(APIView):
                    "message": "Proposta deletada com sucesso!"
                 },
             )
-        ],
-      
-        
-        
-        
-        
+        ],      
     )
     def delete(self, request, pk, *args, **kwargs):
         try:
