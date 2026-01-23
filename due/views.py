@@ -49,7 +49,7 @@ class DueListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return DueDiligence.objects.select_related('analista','precatorio').all()
-    
+
 @extend_schema(
     tags=["Due Diligence"],
     summary="Listar diligências ativas",
@@ -57,7 +57,7 @@ class DueListCreateView(generics.ListCreateAPIView):
     responses={
         200: OpenApiResponse(
             description="Lista de diligências ativas",
-            response=DueDiligenceSerializer(many=True), 
+            response=DueDiligenceSerializer(many=True),
             examples=[
                 OpenApiExample(
                     name="Lista de diligencias",
@@ -173,8 +173,8 @@ class DueListView(generics.ListAPIView):
 class DueListPrioridadeView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = DueDiligenceSerializer
-    
-    queryset = DueDiligence.objects.none() 
+
+    queryset = DueDiligence.objects.none()
 
     def get_queryset(self):
         user = self.request.user
@@ -182,30 +182,30 @@ class DueListPrioridadeView(generics.ListAPIView):
 
         if user.type_user != TypeUserChoices.ADMINISTRADOR:
             filter_map = {
-                TypeUserChoices.ADVOGADO: 'analista',            
-                TypeUserChoices.CEDENTE: 'precatorio__cedente',  
-                TypeUserChoices.BROKER: 'precatorio__broker'     
+                TypeUserChoices.ADVOGADO: 'analista',
+                TypeUserChoices.CEDENTE: 'precatorio__cedente',
+                TypeUserChoices.BROKER: 'precatorio__broker'
             }
-            
+
             campo_de_filtro = filter_map.get(user.type_user)
 
             if campo_de_filtro:
                 queryset = queryset.filter(**{campo_de_filtro: user})
             else:
                 return DueDiligence.objects.none()
-            
+
         raw_prioridade = self.request.query_params.get('prioridade')
-        
+
         if raw_prioridade:
             raw_prioridade = raw_prioridade.lower()
-            
+
             mapa_prioridade = {
                 'alta': DueDiligence.PrioridadeType.ALTA,
                 'baixa': DueDiligence.PrioridadeType.BAIXA,
-                'media': DueDiligence.PrioridadeType.MEDIA,  
-                'média': DueDiligence.PrioridadeType.MEDIA,  
+                'media': DueDiligence.PrioridadeType.MEDIA,
+                'média': DueDiligence.PrioridadeType.MEDIA,
             }
-            
+
             prioridade_db = mapa_prioridade.get(raw_prioridade)
 
             if prioridade_db:
@@ -219,7 +219,7 @@ class DueAprovadasViewSet(ModelViewSet):
     permission_classes = [IsAdvogadoOrBrokerOrCedente]
     serializer_class = DueDiligenceSerializer
     queryset = DueDiligence.objects.all()
-    
+
     def get_queryset(self):
         return DueDiligence.objects.select_related(
             'analista','precatorio','precatorio__broker','precatorio__cedente'
@@ -273,7 +273,7 @@ class DueAprovadasViewSet(ModelViewSet):
                                     },
                                     "analista": "4f1fc912-3111-461e-8094-0aef157cdbe6",
                                     "status_analise": "APROVADO",
-                                    "observacoes": "Atualização da due por nova rota 22/01/2026.",
+                                    "observacoes": "Atualização da due.",
                                     "created_at": "19-01-2026 08:55",
                                     "user_detalhes": {
                                         "name": "Mario adm",
@@ -298,40 +298,40 @@ class DueAprovadasViewSet(ModelViewSet):
             )
         }
     )
-    
+
     @action(detail=False, methods=['get'], url_path="listar-diligencias")
     def listar_due_aprovadas(self, request):
-        
+
         user = request.user
         status = DueDiligence.StatusAnalise.APROVADO
         """
             Acessando diretamente o get_queryset(), acessamos o nosso queryset personalizado que já busca os dados que vamos usar.
         """
         queryset = self.get_queryset().filter(status_analise=status)
-        
+
         if user.type_user == TypeUserChoices.ADMINISTRADOR:
             qs = queryset
 
         elif user.type_user == TypeUserChoices.ADVOGADO:
             qs = queryset.filter(analista=user)
-        
+
         elif user.type_user == TypeUserChoices.BROKER:
             qs = queryset.filter(precatorio__broker=user)
-        
+
         elif user.type_user == TypeUserChoices.CEDENTE:
             qs = queryset.filter(precatorio__cedente=user)
         else:
             qs = queryset.none()
-        
+
         paginacao = self.paginate_queryset(queryset=qs)
         if paginacao is not None:
             serializer = self.get_serializer(paginacao, many=True)
             return self.get_paginated_response(data=serializer.data)
-        
+
         serializer = self.get_serializer(qs, many=True)
         return Response({'results': serializer.data})
-    
-    
+
+
     @extend_schema(
         summary="Editar Diligencias com o PATCH",
         description="Atualização de campos de uma diligencia, advogados podem alteram suas próprias diligencias e o admin altera qualquer uma.",
@@ -341,7 +341,7 @@ class DueAprovadasViewSet(ModelViewSet):
             examples=[
                 OpenApiExample(
                     name="Exemplo de envio de dados na requisição",
-                    summary="Atualizando os campos de observação e status de um diligencia",
+                    summary="Atualizando os campos de observação e status de um diligencia no sistema",
                     description="Exemplo de envio para aprovar uma Due.",
                     value={
                         "observacoes": "Documentação foi verificada e aprovada com sucesso, podemos seguir com o processo.",
@@ -379,12 +379,12 @@ class DueAprovadasViewSet(ModelViewSet):
                 instance = DueDiligence.objects.get(id=pk)
             except DueDiligence.DoesNotExist:
                 return Response(status=404)
-            
+
             Usando o get_object() ele já faz isso e ainda retorna um 404 caso o objeto não exista e faz a checagem de permissões com check_object_permissions.
-        
+
         """
         instance = self.get_object()
-        
+
         if user.type_user == TypeUserChoices.ADMINISTRADOR:
             pass
         elif user.type_user == TypeUserChoices.ADVOGADO:
@@ -393,7 +393,7 @@ class DueAprovadasViewSet(ModelViewSet):
         else:
             return Response(
                 {"error":"Você não tem permissão para edição."},
-                status=status.HTTP_403_FORBIDDEN)        
+                status=status.HTTP_403_FORBIDDEN)
         return super().partial_update(request, *args, **kwargs)
 
 @extend_schema(
@@ -445,7 +445,7 @@ class DueUpdateView(generics.UpdateAPIView):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
-            
+
 @extend_schema_view(
     get=extend_schema(
         summary="Listar Diligências por usuário",
@@ -474,7 +474,7 @@ class DueDiligenceListCreateView(generics.ListCreateAPIView):
         if user.type_user == TypeUserChoices.ADMINISTRADOR:
             return DueDiligence.objects.all()
         return DueDiligence.objects.filter(analista=user)
-    
+
     def perform_create(self, serializer):
         serializer.save(analista=self.request.user)
 
@@ -543,7 +543,7 @@ class DueDiligenceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
                     value={
                         "precatorio":["Esse precatório já esta em diligencia."]
                     }
-                )       
+                )
             ]
         ),
     }
@@ -552,10 +552,9 @@ class DueCreateView(generics.CreateAPIView):
     permission_classes = [IsAdminOrAdvogado]
     serializer_class = DueDiligenceCreateSerializer
     queryset = DueDiligence.objects.all()
-    
+
     def create(self, request, *args, **kwargs):
         try:
-            """Invoca o metôdo pai de CreateAPIView e encaminha o resquest para que seja feita a mentagem o Response"""
             response = super().create(request, *args, **kwargs)
             return Response(
                 {
@@ -573,11 +572,11 @@ class DueCreateView(generics.CreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-            
+
         except IntegrityError:
             return Response(
                 {
-                    "message": "Erro ao criar due diligence", 
+                    "message": "Erro ao criar due diligence",
                     "errors": {
                         "precatorio": ["Já existe uma Due Diligence ativa para este precatório."]
                     }
@@ -591,7 +590,7 @@ class DueCreateView(generics.CreateAPIView):
             serializer.save(analista=user)
         except IntegrityError:
             raise ValidationError({'error':'Diligencia já cadastrada no sistema'})
-  
+
 @extend_schema(
     summary="Listar Analises de Documentos",
     description="Lista analises por responsável, somente para Advogados e Brokers.",
@@ -872,16 +871,16 @@ class DueCreateView(generics.CreateAPIView):
 )
 class AnaliseDocumentoListView(APIView):
     permission_classes = [IsAdminBrokerOrAdvogado]
-    
+
     def get(self, request):
         user = request.user
         queryset = AnaliseDocumento.objects.select_related('due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por', )
-        
+
         if user.type_user == TypeUserChoices.ADMINISTRADOR:
             queryset
         if user.type_user == TypeUserChoices.ADVOGADO or user.type_user == TypeUserChoices.BROKER:
             queryset.filter(analisado_por=user)
-        
+
         serializer = AnaliseDocumentoSerializer(queryset, many=True)
         return Response({
             'results':serializer.data
@@ -938,7 +937,7 @@ class AnaliseDocumentoListView(APIView):
         400:OpenApiResponse("Verifique os campos e tente novamente."),
         403:OpenApiResponse(description="Somento o dono desse ativo pode realizar edições.")
     }
-    
+
 )
 class AnaliseDocumentoUpdateView(APIView):
     permission_classes = [IsAdminOrAdvogado]
@@ -958,10 +957,10 @@ class AnaliseDocumentoUpdateView(APIView):
                 return Response({
                     "error":'Somente o dono pode alterar.'
                 },status=status.HTTP_403_FORBIDDEN)
-        
+
         serializer = AnaliseDocumentoSerializer(instance=queryset, data=request.data, partial=True, context={"request": request})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response({'result':serializer.data}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
