@@ -290,3 +290,6 @@ Segue a descrição dos principais diretórios:
 - `README.md`: Documentação do projeto.
 - `requirements.txt`: Lista de dependências do projeto.
 
+
+## Licença
+Este projeto está licenciado sob a Licença MIT. Veja o arquivo LICENSE para mais detalhes.
