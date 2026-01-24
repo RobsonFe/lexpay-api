@@ -248,3 +248,45 @@ A documentação da API está disponível em: `http://localhost:8000/api/schema/
 ```
 
 Após isso, no `settings.py` adicione a tag no campo `TAGS` da configuração do `SPECTACULAR_SETTINGS`.
+
+## Executando o Servidor Django
+Para executar o servidor Django, utilize o comando:
+
+```bash
+python manage.py runserver
+```
+
+O servidor estará disponível em `http://localhost:8000/`.
+
+## Estrutura do Projeto
+A estrutura do projeto é organizada da seguinte forma:
+
+```
+LEXPAY-API
+│   docker-compose.yml
+│   manage.py
+│   README.md 
+│   requirements.txt
+├── auth/
+├── core/
+├── docs/
+├── due/
+├── hook/
+├── media/
+├── oficio/
+└── proposal/
+```
+Segue a descrição dos principais diretórios:
+- `auth/`: Módulo responsável pela autenticação e gerenciamento de usuários.
+- `core/`: Configurações principais do projeto Django.
+- `docs/`: Documentação do projeto.
+- `due/`: Módulo responsável pela due diligence dos precatórios.
+- `hook/`: Módulo responsável pelos hooks do sistema.
+- `media/`: Diretório para armazenamento de arquivos de mídia.
+- `oficio/`: Módulo responsável pelo gerenciamento dos ofícios relacionados aos precatórios.
+- `proposal/`: Módulo responsável pela geração e gerenciamento de propostas de antecipação.
+- `docker-compose.yml`: Arquivo de configuração do Docker Compose para orquestração dos containers.
+- `manage.py`: Script de gerenciamento do Django.
+- `README.md`: Documentação do projeto.
+- `requirements.txt`: Lista de dependências do projeto.
+
