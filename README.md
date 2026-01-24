@@ -6,11 +6,11 @@ O projeto LexPay é uma API REST para gestão e negociação de precatórios (t�
 
 ## Objetivo
 
-- Fornecer uma interface RESTful relacionado a precatórios de documentos. Funcionará como backend para um sistema de gerenciamento de precatórios de documentos.
+- Fornecer uma interface RESTful relacionada a precatórios de documentos. Funcionará como backend para um sistema de gerenciamento de precatórios de documentos.
 
 ## Inspiração
 
-- Esse sistema foi desenvolvido como um prototipo básico para treinamento de desenvlvedores juniors se inteirando em um sistema real de gerenciamento de precatórios da Ativos, que é o Celer.
+- Esse sistema foi desenvolvido como um protótipo básico para treinamento de desenvolvedores juniores se inteirarem em um sistema real de gerenciamento de precatórios da Ativos, que é o Celer.
 - Origem do nome: LexPay (A união da LEI com o PAGAMENTO)
 
 ## Tecnologias
@@ -27,9 +27,9 @@ O projeto LexPay é uma API REST para gestão e negociação de precatórios (t�
 - django filter 25.2
 - python decouple 3.8
 
-## Como Instalar as dependencias do Projeto
+## Como Instalar as dependências do Projeto
 
-- inicie Ambiente Virtual `venv`
+- Inicie o ambiente virtual `venv`
 
 ```bash
 python -m venv venv
@@ -221,9 +221,7 @@ python manage.py migrate
 
 ## Documentação da API
 
-A documentação da API está disponível em: `http://localhost:8000/api/docs/`
-
-A documentação da API está disponível em: `http://localhost:8000/api/schema/redoc/`
+A documentação da API está disponível em `http://localhost:8000/api/docs/` e `http://localhost:8000/api/schema/redoc/`.
 
 ### Como configurar os Endpoints na Documentação
 
@@ -233,7 +231,6 @@ A documentação da API está disponível em: `http://localhost:8000/api/schema/
 - Adicione a requisição do endpoint no campo `request`
 - Adicione a resposta do endpoint no campo `responses`
 - Adicione o exemplo de requisição no campo `examples`
-- Adicione o exemplo de resposta no campo `examples`
 - Adicione o exemplo de resposta no campo `examples`
 - Use o `Hook` para filtrar os endpoints que possuem uma das tags permitidas.
 
@@ -265,7 +262,7 @@ A estrutura do projeto é organizada da seguinte forma:
 LEXPAY-API
 │   docker-compose.yml
 │   manage.py
-│   README.md 
+│   README.md
 │   requirements.txt
 ├── auth/
 ├── core/
