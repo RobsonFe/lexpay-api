@@ -288,5 +288,146 @@ Segue a descrição dos principais diretórios:
 - `requirements.txt`: Lista de dependências do projeto.
 
 
+## Exemplos de Fluxo da API
+Os exemplos mostram um fluxo completo: cadastro do ativo, análise/aprovação e negociação.
+
+### 1. Cadastro do precatório (Ofício › Criar Precatório)
+**Endpoint:** `POST /api/v1/oficio/precatorios/`
+
+**Request**
+```json
+{
+  "numero_processo": "PROC-EXEMPLO-0001",
+  "natureza": "Alimentar",
+  "valor_principal": "190000.00",
+  "valor_venda": "100000.00",
+  "percentual_honorarios": "10.00",
+  "data_expedicao": "2024-11-30",
+  "ano_orcamentario": 2025,
+  "status": "Em Análise",
+  "descricao": "Precatório alimentar de exemplo",
+  "tribunal_id": "UUID-TRIBUNAL-EXEMPLO",
+  "ente_devedor_id": "UUID-ENTE-DEVEDOR-EXEMPLO"
+}
+```
+
+**Response**
+```json
+{
+  "message": "Precatório criado com sucesso",
+  "result": {
+    "id": "PRECATORIO_ID_EXEMPLO",
+    "numero_processo": "PROC-EXEMPLO-0001",
+    "natureza": "Alimentar",
+    "valor_principal": "190000.00",
+    "valor_venda": "100000.00",
+    "percentual_honorarios": "10.00",
+    "status": "Em Análise",
+    "tribunal": { "nome": "Tribunal Exemplo", "sigla": "TRB", "uf": "SP" },
+    "ente_devedor": { "nome": "Ente Devedor Exemplo", "esfera": "Estadual" },
+    "cedente": { "name": "Cedente Exemplo", "email": "cedente@example.com" },
+    "documentos": []
+  }
+}
+```
+
+### 2. Distribuição da Due Diligence (Due › Criar Due Diligence)
+**Endpoint:** `POST /api/v1/due/`
+
+```json
+{
+  "precatorio": "PRECATORIO_ID_EXEMPLO",
+  "prioridade": "ALTA",
+  "observacoes": "Pendências de comprovação de vínculo serão analisadas."
+}
+```
+
+**Resposta resumida**
+```json
+{
+  "id": "DUE_ID_EXEMPLO",
+  "precatorio": "PRECATORIO_ID_EXEMPLO",
+  "analista": "USUARIO_ID_ANALISTA",
+  "prioridade": "ALTA",
+  "status_analise": "PENDENTE",
+  "observacoes": "Pendências de comprovação de vínculo serão analisadas.",
+  "created_at": "2026-01-19T11:55:00Z"
+}
+```
+
+### 3. Aprovação da Due (Due › PATCH /due/aprovadas/{id}/)
+Após revisar documentos no Swagger da tag **Due Diligence**, atualize o status:
+
+```json
+{
+  "status_analise": "APROVADO",
+  "observacoes": "Documentação validada. Seguir para marketplace."
+}
+```
+
+**Resposta**
+```json
+{
+  "id": "DUE_ID_EXEMPLO",
+  "status_analise": "APROVADO",
+  "documento_aprovado": true,
+  "observacoes": "Documentação validada. Seguir para marketplace.",
+  "updated_at": "2026-01-22T14:30:00Z"
+}
+```
+
+### 4. Criação da proposta (Propostas › Calculadora)
+**Endpoint:** `POST /api/v1/proposals/`
+
+```json
+{
+  "precatorio": "PRECATORIO_ID_EXEMPLO",
+  "valor_proposto": "150000.00",
+  "taxa_desconto": "18.50",
+  "taxa_juros_anual": "12.50",
+  "prazo_pagamento_meses": 18,
+  "data_vencimento": "2026-12-31",
+  "observacoes": "Oferta condicionada à aprovação interna."
+}
+```
+
+**Resposta**
+```json
+{
+  "id": "PROPOSTA_ID_EXEMPLO",
+  "precatorio": "PRECATORIO_ID_EXEMPLO",
+  "valor_proposto": "150000.00",
+  "valor_liquido_cedente": "135000.00",
+  "valor_liquido_proponente": "41250.00",
+  "taxa_desconto": "18.50",
+  "status": "ENVIADA",
+  "created_at": "2026-01-22T15:05:00Z"
+}
+```
+
+### 5. Visualização pelo cedente (Propostas › Listar)
+**Endpoint:** `GET /api/v1/proposals/`
+
+```json
+{
+  "results": [
+    {
+      "id": "PROPOSTA_ID_EXEMPLO",
+      "precatorio_detalhes": {
+        "numero_processo": "PROC-EXEMPLO-0001",
+        "tribunal": { "sigla": "TRB" },
+        "valor_principal": "190000.00"
+      },
+      "proponente_nome": "Broker Exemplo",
+      "valor_proposto": "150000.00",
+      "valor_liquido_cedente": "135000.00",
+      "status": "ENVIADA",
+      "data_vencimento": "31-12-2026",
+      "created_at": "22-01-2026 15:05"
+    }
+  ]
+}
+```
+
 ## Licença
 Este projeto está licenciado sob a Licença MIT. Veja o arquivo LICENSE para mais detalhes.

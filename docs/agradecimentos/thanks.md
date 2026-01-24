@@ -8,7 +8,7 @@ Recentemente, tive a oportunidade de liderar o desenvolvimento da **LexPay**, um
 
 Sob a aprovação do nosso CTO na Ativos, **Jarbas Gouveia**, assumi a responsabilidade pela arquitetura do sistema e pelo gerenciamento da equipe. O objetivo era construir um ecossistema robusto que conectasse cedentes, brokers e advogados, permitindo desde a due diligence até a geração de propostas financeiras.
 
-Neste processo, orientei os desenvolvedores **Mainaldo Santana** e **Everton Silva**, focando em boas práticas de desenvolvimento, padrões de API e integração de dados.
+Neste processo, orientei os desenvolvedores **Marinaldo Santana** e **Everton Anjos**, focando em boas práticas de desenvolvimento, padrões de API e integração de dados.
 
 ### **Stack Tecnológica e Estrutura**
 
