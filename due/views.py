@@ -48,7 +48,10 @@ class DueListCreateView(generics.ListCreateAPIView):
     queryset = DueDiligence.objects.all()
 
     def get_queryset(self):
-        return DueDiligence.objects.select_related('analista','precatorio').all()
+        return DueDiligence.objects.select_related(
+            'analista', 'precatorio', 'precatorio__tribunal', 
+            'precatorio__ente_devedor', 'precatorio__cedente', 'precatorio__advogado'
+        ).prefetch_related('precatorio__documentos').all()
 
 @extend_schema(
     tags=["Due Diligence"],
@@ -102,12 +105,15 @@ class DueListView(generics.ListAPIView):
     queryset = DueDiligence.objects.all()
 
     def get_queryset(self):
-        queryset = DueDiligence.objects.select_related('precatorio','analista').exclude(
-            ~Q(status_analise__in = [
-                    DueDiligence.StatusAnalise.APROVADO,
-                    DueDiligence.StatusAnalise.REJEITADO
-                ])
-            )
+        queryset = DueDiligence.objects.select_related(
+            'precatorio', 'analista', 'precatorio__tribunal',
+            'precatorio__ente_devedor', 'precatorio__cedente', 'precatorio__advogado'
+        ).prefetch_related('precatorio__documentos').exclude(
+            status_analise__in=[
+                DueDiligence.StatusAnalise.APROVADO,
+                DueDiligence.StatusAnalise.REJEITADO
+            ]
+        )
         user = self.request.user
         if user.type_user == TypeUserChoices.ADVOGADO:
             return queryset.filter(analista=user)
@@ -178,7 +184,10 @@ class DueListPrioridadeView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = DueDiligence.objects.select_related('precatorio', 'analista').all()
+        queryset = DueDiligence.objects.select_related(
+            'precatorio', 'analista', 'precatorio__tribunal',
+            'precatorio__ente_devedor', 'precatorio__cedente',
+            'precatorio__advogado').prefetch_related('precatorio__documentos').all()
 
         if user.type_user != TypeUserChoices.ADMINISTRADOR:
             filter_map = {
@@ -222,8 +231,9 @@ class DueAprovadasViewSet(ModelViewSet):
 
     def get_queryset(self):
         return DueDiligence.objects.select_related(
-            'analista','precatorio','precatorio__broker','precatorio__cedente'
-        ).all()
+            'analista', 'precatorio', 'precatorio__broker', 'precatorio__cedente',
+            'precatorio__tribunal', 'precatorio__ente_devedor', 'precatorio__advogado'
+        ).prefetch_related('precatorio__documentos').all()
 
     @extend_schema(
         summary="Listagem de Diligencias aprovadas",
@@ -471,9 +481,14 @@ class DueDiligenceListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = DueDiligence.objects.select_related(
+            'analista', 'precatorio', 'precatorio__tribunal', 
+            'precatorio__ente_devedor', 'precatorio__cedente', 'precatorio__advogado'
+        ).prefetch_related('precatorio__documentos')
+        
         if user.type_user == TypeUserChoices.ADMINISTRADOR:
-            return DueDiligence.objects.all()
-        return DueDiligence.objects.filter(analista=user)
+            return queryset.all()
+        return queryset.filter(analista=user)
 
     def perform_create(self, serializer):
         serializer.save(analista=self.request.user)
@@ -500,8 +515,9 @@ class DueDiligenceRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     def get_queryset(self):
         user = self.request.user
         queryset = DueDiligence.objects.select_related(
-            'precatorio', 'analista', 'precatorio__tribunal', 'precatorio__ente_devedor'
-        )
+            'precatorio', 'analista', 'precatorio__tribunal', 
+            'precatorio__ente_devedor', 'precatorio__cedente', 'precatorio__advogado'
+        ).prefetch_related('precatorio__documentos')
 
         is_admin = user.is_staff or (user.type_user == TypeUserChoices.ADMINISTRADOR)
 
@@ -875,12 +891,17 @@ class AnaliseDocumentoListView(APIView):
 
     def get(self, request):
         user = request.user
-        queryset = AnaliseDocumento.objects.select_related('due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por', )
+        queryset = AnaliseDocumento.objects.select_related(
+            'due_diligence', 'due_diligence__precatorio', 'documento', 'analisado_por',
+            'due_diligence__analista', 'due_diligence__precatorio__tribunal',
+            'due_diligence__precatorio__ente_devedor', 'due_diligence__precatorio__cedente',
+            'due_diligence__precatorio__advogado'
+        ).prefetch_related(
+            'due_diligence__precatorio__documentos'
+        ).all()
 
-        if user.type_user == TypeUserChoices.ADMINISTRADOR:
-            queryset
-        if user.type_user == TypeUserChoices.ADVOGADO or user.type_user == TypeUserChoices.BROKER:
-            queryset.filter(analisado_por=user)
+        if user.type_user != TypeUserChoices.ADMINISTRADOR:
+            queryset = queryset.filter(analisado_por=user)
 
         serializer = AnaliseDocumentoSerializer(queryset, many=True)
         return Response({
