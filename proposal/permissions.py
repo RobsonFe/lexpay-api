@@ -1,6 +1,5 @@
 from rest_framework import permissions
 
-
 class IsAdminOrBroker(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -14,7 +13,6 @@ class IsAdminOrBroker(permissions.BasePermission):
             'Broker'
         ]
         
-
 class IsBrokerOrCedenteOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -28,4 +26,3 @@ class IsBrokerOrCedenteOrAdmin(permissions.BasePermission):
             'Broker', 
             'Cedente'
         ]
-        
