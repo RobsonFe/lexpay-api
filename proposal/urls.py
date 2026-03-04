@@ -1,5 +1,5 @@
-from django.urls import path
-
+from django.urls import path, include
+from rest_framework import routers
 from proposal.views import (
     CreateProposalView,
     InvestorOpportunitiesView,
@@ -7,7 +7,12 @@ from proposal.views import (
     ProposalDeleteView,
     ProposalListView,
     ProposalUpdateView,
+    ProposalViewSet
 )
+
+router = routers.DefaultRouter()
+router.register(r"", ProposalViewSet, basename="proposal")
+
 
 urlpatterns = [
     path("create/", CreateProposalView.as_view(), name="create_proposal"),
@@ -20,4 +25,5 @@ urlpatterns = [
         InvestorOpportunitiesView.as_view(),
         name="investor_opportunities",
     ),
+    path("", include(router.urls))
 ]

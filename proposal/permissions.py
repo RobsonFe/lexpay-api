@@ -9,9 +9,9 @@ class IsAdminOrBroker(permissions.BasePermission):
         if request.user.is_staff:
             return True
         
-        return request.user.role in[
-            'ADMINISTRADOR', 
-            'BROKER'
+        return request.user.type_user in[
+            'Administrador', 
+            'Broker'
         ]
         
 
@@ -23,9 +23,9 @@ class IsBrokerOrCedenteOrAdmin(permissions.BasePermission):
         if request.user.is_staff:
             return True
 
-        return request.user.role in[
-            'BROKER',
-            'CEDENTE',
-            'ADMINISTRADOR'
+        return request.user.type_user in[
+            'Administrador', 
+            'Broker', 
+            'Cedente'
         ]
         
