@@ -113,11 +113,11 @@ class ProposalListView(APIView):
         user = self.request.user
         try:
             if user.type_user == "Administrador":
-                queryset = Proposal.objects.all()
+                queryset = Proposal.objects.select_related("precatorio", "proponente")
             elif user.type_user == "Broker":
-                queryset = Proposal.objects.filter(proponente=user)
+                queryset = Proposal.objects.filter(proponente=user).select_related("precatorio", "proponente")
             elif user.type_user == "Cedente":
-                queryset = Proposal.objects.filter(precatorio__cedente=user)
+                queryset = Proposal.objects.filter(precatorio__cedente=user).select_related("precatorio", "proponente")
             serializer = self.serializer_class(queryset, many=True)
             return Response({"results": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -273,8 +273,8 @@ class InvestorOpportunitiesView(APIView):
         ]
     )
     def get(self, request):
-
-        proposals = Proposal.objects.filter(status="ENVIADA").com_score_atratividade()
+        queryset = Proposal.objects.select_related("precatorio", "proponente")
+        proposals = queryset.filter(status="ENVIADA").com_score_atratividade()
         serializer = ProposalSerializer(proposals, many=True)
         return Response(
             {"count": proposals.count(), "results": serializer.data},
@@ -425,11 +425,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
     
         user = self.request.user
         if user.type_user == "Administrador":
-            return Proposal.objects.all()
+            return Proposal.objects.select_related("precatorio", "proponente")
         elif user.type_user == "Broker":
-            return Proposal.objects.filter(proponente=user)
+            return Proposal.objects.filter(proponente=user).select_related("precatorio", "proponente")
         elif user.type_user == "Cedente":
-            return Proposal.objects.filter(precatorio__cedente=user)
+            return Proposal.objects.filter(precatorio__cedente=user).select_related("precatorio", "proponente")
         return Proposal.objects.none()
 
     @action(detail=False, methods=["get"], permission_classes=[IsBrokerOrCedenteOrAdmin], url_path="show")
@@ -437,11 +437,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
         user = self.request.user
         try:
             if user.type_user == "Administrador":
-                queryset = Proposal.objects.all()
+                queryset = Proposal.objects.select_related("precatorio", "proponente").all()
             elif user.type_user == "Broker":
-                queryset = Proposal.objects.filter(proponente=user)
+                queryset = Proposal.objects.filter(proponente=user).select_related("precatorio", "proponente")
             elif user.type_user == "Cedente":
-                queryset = Proposal.objects.filter(precatorio__cedente=user)
+                queryset = Proposal.objects.filter(precatorio__cedente=user).select_related("precatorio", "proponente")
             serializer = self.serializer_class(queryset, many=True)
             return Response({"results": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
