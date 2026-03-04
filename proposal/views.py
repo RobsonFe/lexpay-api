@@ -284,7 +284,7 @@ class InvestorOpportunitiesView(APIView):
 @extend_schema_view( 
         show=extend_schema(            
         tags=["Propostas"],
-        summary="Rota para Listar propostas [ViewSet]",
+        summary="Rota para Listar propostas",
         request=None,
         description= "Lista todas as propostas de antecipação de precatórios. de acordo com o usuário logado.",
         responses={
@@ -324,7 +324,7 @@ class InvestorOpportunitiesView(APIView):
     
     build=extend_schema(
         tags=["Propostas"],
-    summary="Calculadora Automática de Propostas [ViewSet]",
+    summary="Calculadora Automática de Propostas",
     description="Calculadora automática de propostas de antecipação de precatórios.",
     responses={
         201: ProposalSerializer,
@@ -351,7 +351,7 @@ class InvestorOpportunitiesView(APIView):
     
     replace=extend_schema(
         tags=["Propostas"],
-        summary="Rota Para Atualizar propostas [ViewSet]",
+        summary="Rota Para Atualizar propostas",
         request=ProposalSerializer,
         responses={201: ProposalSerializer,
             401: OpenApiResponse(description="Não autenticado"),
@@ -376,7 +376,7 @@ class InvestorOpportunitiesView(APIView):
     
     accept=extend_schema(
         tags=["Propostas"],
-        summary="Rota para Aceitar proposta [ViewSet]",
+        summary="Rota para Aceitar proposta",
         description="Endpoint para aceitar uma proposta. Rejeita automaticamente concorrentes.",
         responses={
             200: ProposalSerializer,
@@ -397,7 +397,7 @@ class InvestorOpportunitiesView(APIView):
     drop=extend_schema(
         tags=["Propostas"],
         request=ProposalSerializer,
-        summary="Rota para Excluir proposta [ViewSet]",
+        summary="Rota para Excluir proposta",
         description="Rota para exclusão de uma proposta de Antecipação de um precatório, somente Brokers e Administradores podem excluir propostas.",
         responses={201: ProposalSerializer,
             401: OpenApiResponse(description="Não autenticado"),
@@ -414,7 +414,7 @@ class InvestorOpportunitiesView(APIView):
     )
 )
 
-class ProposalCrudViewSet(viewsets.ModelViewSet):
+class ProposalViewSet(viewsets.ModelViewSet):
     lookup_field = 'pk'
     serializer_class = ProposalSerializer
     permission_classes = [IsBrokerOrCedenteOrAdmin]

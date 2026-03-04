@@ -7,12 +7,11 @@ from proposal.views import (
     ProposalDeleteView,
     ProposalListView,
     ProposalUpdateView,
-    ProposalCrudViewSet
+    ProposalViewSet
 )
 
 router = routers.DefaultRouter()
-router.register(r"", ProposalCrudViewSet, basename="proposal-crud")
-
+router.register(r"", ProposalViewSet, basename="proposal")
 
 
 urlpatterns = [
