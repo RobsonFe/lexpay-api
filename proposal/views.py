@@ -46,23 +46,11 @@ class CreateProposalView(generics.CreateAPIView):
     serializer_class = ProposalSerializer
 
     def perform_create(self, serializer):
-        if getattr(self, "swagger_fake_view", False):
-            return None
-        
-        user = self.request.user
-        if user.type_user not in ["Broker", "Admin"]:
-            raise PermissionDenied(
-                "Apenas usuários do tipo 'Broker' podem criar propostas de compra."
-            )
         try:
-            with transaction.atomic():
-                proposal = serializer.save(proponente=user)
-                proposal._current_user = user
-                proposal.status = "ENVIADA"
-                proposal.save()
-                return Response(
-                    {"result": serializer.data}, status=status.HTTP_201_CREATED
-                )
+            proposal = ProposalService.criar_propostas(self.request.user, serializer.validated_data)
+            serializer.instance = proposal
+            return Response({"result": serializer.data}, status=status.HTTP_201_CREATED)
+       
         except Exception as e:
             return Response({"error": [str(e)]}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -110,21 +98,13 @@ class ProposalListView(APIView):
         ]
     )
     def get(self, request):
-        user = self.request.user
-        try:
-            if user.type_user == "Administrador":
-                queryset = Proposal.objects.select_related("precatorio", "proponente")
-            elif user.type_user == "Broker":
-                queryset = Proposal.objects.filter(proponente=user).select_related("precatorio", "proponente")
-            elif user.type_user == "Cedente":
-                queryset = Proposal.objects.filter(precatorio__cedente=user).select_related("precatorio", "proponente")
-            serializer = self.serializer_class(queryset, many=True)
-            return Response({"results": serializer.data}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        proposals = ProposalService.listar_propostas(request.user)
+        serializer = self.serializer_class(proposals, many=True)
+        return Response({"results": serializer.data}, status=status.HTTP_200_OK)
 
 class ProposalUpdateView(APIView):
     permission_classes = [IsAdminOrBroker]
+    serializer_class = ProposalSerializer
 
     @extend_schema(
         tags=["Propostas"],
@@ -150,19 +130,11 @@ class ProposalUpdateView(APIView):
             )
         ],
     )
-    def patch(self, request, pk, *args, **kwargs):
+    def patch(self, request, pk):
         try:
-            proposal = get_object_or_404(Proposal, pk=pk)
-            serializer = ProposalSerializer(proposal, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(
-                {
-                    "message": "Proposta atualizada com sucesso!",
-                    "data": serializer.data,
-                },
-                status=status.HTTP_200_OK,
-            )
+            proposal = ProposalService.atualizar_proposta(pk, request.data, request.user)
+            serializer = ProposalSerializer(proposal) 
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -188,14 +160,14 @@ class ProposalDeleteView(APIView):
         ],      
     )
     def delete(self, request, pk, *args, **kwargs):
+        proposal = ProposalService.deletar_propostas(proposal_id=pk)
         try:
-            proposal = get_object_or_404(Proposal, pk=pk)
-            proposal.delete()
             return Response(
                 {"message": "Proposta deletada com sucesso!"}, status=status.HTTP_200_OK
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
 
 class ProposalAcceptView(APIView):
     permission_classes = [IsAdminOrBroker]
@@ -222,8 +194,6 @@ class ProposalAcceptView(APIView):
     def patch(self, request, pk):
         try:
             ProposalService.aceitar_proposta(pk, request.user)
-            
-            
             return Response(
                 {"message": "Proposta aceita e concorrentes rejeitadas."},
                 status=status.HTTP_200_OK,
@@ -490,4 +460,3 @@ class ProposalViewSet(viewsets.ModelViewSet):
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        

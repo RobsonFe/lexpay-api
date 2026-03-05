@@ -41,7 +41,7 @@ class ProposalSerializer(serializers.ModelSerializer):
             "status",
             "created_at",
         ]
-        read_only_fields = ["status", "created_at"]
+        read_only_fields = ["status", "created_at", "id"]
 
     def validate(self, data):
         precatorio = data.get("precatorio") or (
