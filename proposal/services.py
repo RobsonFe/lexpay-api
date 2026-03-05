@@ -14,14 +14,14 @@ from auth.models import User
 class ProposalService:
     @staticmethod
     def aceitar_proposta(proposal_id, user_name):
-        proposal = (
+        
+        with transaction.atomic():
+            proposal = (
             Proposal.objects.select_related("precatorio")
             .select_for_update()
             .get(pk=proposal_id)
         )
-        precatorio = proposal.precatorio
-
-        with transaction.atomic():
+            precatorio = proposal.precatorio
             if proposal.data_vencimento < timezone.now().date():
                 proposal.status = "EXPIRADA"
                 proposal.save()
