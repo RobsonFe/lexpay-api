@@ -49,7 +49,7 @@ class CreateProposalView(generics.CreateAPIView):
         try:
             proposal = ProposalService.criar_propostas(self.request.user, serializer.validated_data)
             serializer.instance = proposal
-            return Response({"result": serializer.data}, status=status.HTTP_201_CREATED)
+            return Response({"message": "Proposta criada com sucesso!", "result": serializer.data}, status=status.HTTP_201_CREATED)
        
         except Exception as e:
             return Response({"error": [str(e)]}, status=status.HTTP_400_BAD_REQUEST)
@@ -100,7 +100,7 @@ class ProposalListView(APIView):
     def get(self, request):
         proposals = ProposalService.listar_propostas(request.user)
         serializer = self.serializer_class(proposals, many=True)
-        return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"message": "Propostas encontradas.", "results": serializer.data}, status=status.HTTP_200_OK)
 
 class ProposalUpdateView(APIView):
     permission_classes = [IsAdminOrBroker]
@@ -134,7 +134,7 @@ class ProposalUpdateView(APIView):
         try:
             proposal = ProposalService.atualizar_proposta(pk, request.data, request.user)
             serializer = ProposalSerializer(proposal) 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"message": "Proposta atualizada com sucesso!", "result": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -163,7 +163,7 @@ class ProposalDeleteView(APIView):
         proposal = ProposalService.deletar_propostas(proposal_id=pk)
         try:
             return Response(
-                {"message": "Proposta deletada com sucesso!"}, status=status.HTTP_200_OK
+                {"message": "Proposta deletada com sucesso!"}, status=status.HTTP_204_NO_CONTENT
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -195,7 +195,7 @@ class ProposalAcceptView(APIView):
         try:
             ProposalService.aceitar_proposta(pk, request.user)
             return Response(
-                {"message": "Proposta aceita e concorrentes rejeitadas."},
+                {"message": "Proposta aceita e concorrentes rejeitadas.", "result": ProposalSerializer(Proposal.objects.get(pk=pk)).data},
                 status=status.HTTP_200_OK,
             )
         except ValidationError as e:
@@ -404,6 +404,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], permission_classes=[IsBrokerOrCedenteOrAdmin], url_path="show")
     def show(self, request, *args, **kwargs):
+        serializer = ProposalSerializer
         user = self.request.user
         try:
             if user.type_user == "Administrador":
@@ -412,8 +413,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 queryset = Proposal.objects.filter(proponente=user).select_related("precatorio", "proponente")
             elif user.type_user == "Cedente":
                 queryset = Proposal.objects.filter(precatorio__cedente=user).select_related("precatorio", "proponente")
-            serializer = self.serializer_class(queryset, many=True)
-            return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+            serializer = ProposalSerializer(queryset, many=True)
+            return Response({"message": "Propostas encontradas.", "results": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -422,7 +423,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        return Response({"result": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Proposta criada com sucesso!", "result": serializer.data}, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
         if getattr(self, "swagger_fake_view", False):
@@ -445,8 +446,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["patch"], permission_classes=[IsAdminOrBroker], url_path="accept")
     def accept(self, request, pk=None):
         try:
+            self.serializer_class = ProposalSerializer
             ProposalService.aceitar_proposta(pk, request.user)
-            return Response({"message": "Proposta aceita e concorrentes rejeitadas."}, status=status.HTTP_200_OK)
+            return Response({"message": "Proposta aceita e concorrentes rejeitadas.", "result": self.serializer_class.data}, status=status.HTTP_200_OK)
         except ValidationError as e:
             return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -456,7 +458,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             proposal = get_object_or_404(Proposal, pk=pk)
             proposal.delete()
             return Response(
-                {"message": "Proposta deletada com sucesso!"}, status=status.HTTP_200_OK
+                {"message": "Proposta deletada com sucesso!"}, status=status.HTTP_204_NO_CONTENT
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
