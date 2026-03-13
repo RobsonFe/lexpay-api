@@ -16,6 +16,7 @@ class ProposalService:
     def aceitar_proposta(proposal_id, user_name):
         
         with transaction.atomic():
+            user_obj = User.objects.get(username=user_name)
             proposal = (
             Proposal.objects.select_related("precatorio")
             .select_for_update()
@@ -30,7 +31,7 @@ class ProposalService:
             if precatorio.status != StatusPrecatorioChoices.DISPONIVEL:
                 raise ValidationError("O precatório não está mais disponível.")
 
-            proposal._current_user = user_name
+            proposal._current_user = user_obj
             proposal._change_reason = "Aceite processado via Service Layer"
 
             proposal.status = "ACEITA"

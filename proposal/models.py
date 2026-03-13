@@ -35,11 +35,11 @@ class ProposalQuerySet(models.QuerySet):
 
 class StausChoices:
 
-    RASCUNHO = "Rascunho"
-    ENVIADA = "Enviada"
-    ACEITA = "Aceita"
-    REJEITADA = "Rejeitada"
-    EXPIRADA = "Expirada"
+    RASCUNHO = "RASCUNHO"
+    ENVIADA = "ENVIADA"
+    ACEITA = "ACEITA"
+    REJEITADA = "REJEITADA"
+    EXPIRADA = "EXPIRADA"
 
     STATUS = [
         ("RASCUNHO", "rascunho"),
