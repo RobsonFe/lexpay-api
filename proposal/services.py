@@ -14,14 +14,15 @@ from auth.models import User
 class ProposalService:
     @staticmethod
     def aceitar_proposta(proposal_id, user_name):
-        proposal = (
+        
+        with transaction.atomic():
+            user_obj = User.objects.get(username=user_name)
+            proposal = (
             Proposal.objects.select_related("precatorio")
             .select_for_update()
             .get(pk=proposal_id)
         )
-        precatorio = proposal.precatorio
-
-        with transaction.atomic():
+            precatorio = proposal.precatorio
             if proposal.data_vencimento < timezone.now().date():
                 proposal.status = "EXPIRADA"
                 proposal.save()
@@ -30,7 +31,7 @@ class ProposalService:
             if precatorio.status != StatusPrecatorioChoices.DISPONIVEL:
                 raise ValidationError("O precatório não está mais disponível.")
 
-            proposal._current_user = user_name
+            proposal._current_user = user_obj
             proposal._change_reason = "Aceite processado via Service Layer"
 
             proposal.status = "ACEITA"
